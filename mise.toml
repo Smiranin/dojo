@@ -1,0 +1,50 @@
+min_version = "2026.6.10"
+
+[tools]
+node = "26.10.0"
+pnpm = "12.6.0"
+
+[tasks.setup]
+description = "Install workspace dependencies from the committed lock"
+run = "pnpm install --frozen-lockfile"
+
+[tasks.dev]
+description = "Start the server and the web UI in watch mode (loopback only; DOJO_HOST=0.0.0.0 for the phone on the LAN)"
+run = "pnpm --parallel --filter @dojo/server --filter @dojo/web dev"
+
+[tasks."dev:server"]
+description = "Start the server in watch mode"
+run = "pnpm --filter @dojo/server dev"
+
+[tasks."dev:web"]
+description = "Start the web dev server"
+run = "pnpm --filter @dojo/web dev"
+
+[tasks.build]
+description = "Build every package and application"
+run = "pnpm -r build"
+
+[tasks.start]
+description = "Run the server, which also serves the built web app"
+depends = ["build"]
+run = "pnpm --filter @dojo/server start"
+
+[tasks.typecheck]
+description = "Type-check every package"
+run = "pnpm typecheck"
+
+[tasks.test]
+description = "Run all tests once"
+run = "pnpm test"
+
+[tasks.lint]
+description = "Lint the workspace"
+run = "pnpm lint"
+
+[tasks.format]
+description = "Format the workspace with Prettier"
+run = "pnpm format"
+
+[tasks.check]
+description = "Typecheck, lint, format check and tests: what must pass before a commit"
+run = ["pnpm typecheck", "pnpm lint", "pnpm format:check", "pnpm test"]

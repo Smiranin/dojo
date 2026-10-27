@@ -1,0 +1,17 @@
+# Dojo settings, loaded by apps/server. Paths are relative to this file.
+contentDir: ./content
+dataDir: ./data
+# Keep 127.0.0.1 here: on the personal Mac only `tailscale serve` must reach the server (ADR 0003).
+# For phone testing on the work laptop's private network start with DOJO_HOST=0.0.0.0.
+host: 127.0.0.1
+port: 4800 # DOJO_PORT overrides it
+scheduling:
+  minDays: 1 # after a Fail
+  notesDays: 3 # after a Pass with notes
+  firstPassDays: 7 # the first clean Pass
+  growth: 2 # every further Pass multiplies the interval
+  capDays: 180 # the interval never grows past this
+  knownDays: 21 # a Card whose interval reached this is Known
+sensei:
+  timeoutMs: 120000
+  # model: optional, the Claude Code default when absent
