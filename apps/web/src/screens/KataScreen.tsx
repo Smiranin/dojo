@@ -7,6 +7,8 @@ import { BeltBadge } from '../components/BeltBadge.js';
 import { ConfirmButton } from '../components/ConfirmButton.js';
 import { Shell } from '../components/Shell.js';
 import { Button } from '../components/ui/button.js';
+import { ErrorText } from '../components/ui/error-text.js';
+import { Select } from '../components/ui/select.js';
 import { AuthoringSheet, type AuthoringRequest } from '../features/sensei/AuthoringSheet.js';
 import { useSenseiAvailability } from '../features/sensei/useSenseiAvailability.js';
 import { useDojoState, useSync } from '../store/context.js';
@@ -99,11 +101,7 @@ export function KataScreen() {
         </>
       }
     >
-      {error && (
-        <p role="alert" className="text-destructive text-sm">
-          {error}
-        </p>
-      )}
+      {error && <ErrorText>{error}</ErrorText>}
       <p className="text-muted-foreground">{kata.description}</p>
       {kata.archived && <p className="text-warning text-sm">This Kata is archived.</p>}
       <div className="grid grid-cols-2 gap-2">
@@ -145,11 +143,11 @@ export function KataScreen() {
           ))}
         </ul>
       )}
-      <select
+      <Select
         aria-label="Difficulty"
         value={difficulty}
         onChange={(event) => setDifficulty(event.target.value as Difficulty | '')}
-        className="border-input bg-background h-10 w-fit rounded-md border px-2 text-sm"
+        className="w-fit"
       >
         <option value="">Any Difficulty</option>
         {DIFFICULTIES.map((d) => (
@@ -157,7 +155,7 @@ export function KataScreen() {
             {d}
           </option>
         ))}
-      </select>
+      </Select>
       <ul aria-label="Cards" className="flex flex-col divide-y rounded-xl border">
         {rows.map(({ card, schedule, due: isCardDue }) => (
           <li key={card.id} className="flex items-center justify-between gap-3 p-3">

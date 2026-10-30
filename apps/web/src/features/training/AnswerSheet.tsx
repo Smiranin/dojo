@@ -2,6 +2,7 @@ import type { Result } from '@dojo/core';
 import { useState } from 'react';
 import { api } from '../../api/client.js';
 import { Button } from '../../components/ui/button.js';
+import { Field } from '../../components/ui/field.js';
 import { Sheet, SheetContent } from '../../components/ui/sheet.js';
 import { Textarea } from '../../components/ui/textarea.js';
 import { SenseiWaiting } from '../sensei/SenseiWaiting.js';
@@ -10,8 +11,9 @@ export interface AnswerSheetProps {
   cardId: string;
   open: boolean;
   onClose(): void;
-  /** The Sensei's verdict lands here; the Training reveals the Card with it, no confirm tap. */
-  onChecked(result: Result, notes: string): void;
+  /** The Sensei's verdict lands here with the answer it graded; the Training reveals the Card
+   *  with both, no confirm tap. */
+  onChecked(result: Result, notes: string, answer: string): void;
 }
 
 export function AnswerSheet({ cardId, open, onClose, onChecked }: AnswerSheetProps) {
@@ -25,7 +27,7 @@ export function AnswerSheet({ cardId, open, onClose, onChecked }: AnswerSheetPro
     try {
       const output = await api.senseiCheck(cardId, text);
       setText('');
-      onChecked(output.result, output.notes);
+      onChecked(output.result, output.notes, text);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
@@ -39,19 +41,15 @@ export function AnswerSheet({ cardId, open, onClose, onChecked }: AnswerSheetPro
         title="Your answer"
         description="In your own words; the Sensei grades it against the Card."
       >
-        <Textarea
-          aria-label="Your answer"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          disabled={busy}
-          autoFocus
-          rows={6}
-        />
-        {error && (
-          <p role="alert" className="text-destructive text-sm">
-            {error}
-          </p>
-        )}
+        <Field label="Your answer" hideLabel error={error}>
+          <Textarea
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            disabled={busy}
+            autoFocus
+            rows={6}
+          />
+        </Field>
         {busy ? (
           <SenseiWaiting label="The Sensei is reading your answer…" />
         ) : (

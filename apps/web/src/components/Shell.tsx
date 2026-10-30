@@ -12,10 +12,11 @@ export interface ShellProps {
   children: ReactNode;
 }
 
-/** The page frame: sticky header, the connection banner and a phone-width column. */
+/** The page frame: sticky header, the connection banner and a column that is phone-wide on
+ *  a phone and grows to a reading width on a laptop. */
 export function Shell({ title, back, actions, children }: ShellProps) {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col">
+    <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col md:max-w-3xl">
       <header className="bg-background/95 sticky top-0 z-40 flex items-center gap-2 border-b px-3 py-2 backdrop-blur">
         {back !== undefined ? (
           <Link to={back} aria-label="Back" className="rounded-md p-1 hover:bg-accent">

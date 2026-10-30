@@ -1,15 +1,13 @@
 import type * as React from 'react';
 import { cn } from '../../lib/utils.js';
+import { controlClass, useFieldControl } from './field.js';
 
 function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
   return (
     <textarea
       data-slot="textarea"
-      className={cn(
-        'border-input placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-24 w-full rounded-md border bg-transparent px-3 py-2 text-base outline-none focus-visible:ring-2 disabled:cursor-not-allowed disabled:opacity-50',
-        className,
-      )}
-      {...props}
+      className={cn(controlClass, 'flex min-h-24', className)}
+      {...useFieldControl(props)}
     />
   );
 }

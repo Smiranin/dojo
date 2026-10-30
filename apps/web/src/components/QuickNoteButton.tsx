@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { newId } from '../lib/utils.js';
 import { useSync } from '../store/context.js';
 import { Button } from './ui/button.js';
+import { Field } from './ui/field.js';
 import { Sheet, SheetContent } from './ui/sheet.js';
 import { Textarea } from './ui/textarea.js';
 
@@ -32,16 +33,17 @@ export function QuickNoteButton() {
       </Button>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent title="Quick note" description="Goes to the Inbox; make a Card of it later.">
-          <Textarea
-            aria-label="Note"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            rows={3}
-            autoFocus
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) save();
-            }}
-          />
+          <Field label="Note" hideLabel>
+            <Textarea
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              rows={3}
+              autoFocus
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) save();
+              }}
+            />
+          </Field>
           <Button size="lg" onClick={save} disabled={text.trim() === ''}>
             Save note
           </Button>

@@ -10,6 +10,8 @@ export interface CurrentCard {
   pending?: Result;
   /** The Sensei's notes for a checked answer, shown above the reference answer. */
   notes?: string;
+  /** What the learner wrote for the check; shown with the notes so they can be compared. */
+  answer?: string;
 }
 
 export interface TrainingState {
@@ -30,7 +32,7 @@ export type TrainingAction =
   | { type: 'skip' }
   /** The current Card was deleted: leave it without a Rep and never show it again. */
   | { type: 'drop' }
-  | { type: 'answer-checked'; result: Result; notes: string }
+  | { type: 'answer-checked'; result: Result; notes: string; answer: string }
   | { type: 'change-result'; result: Result }
   | { type: 'next'; at: string; id: string }
   | { type: 'end'; at: string; id: string };
@@ -54,7 +56,11 @@ export function isFinished(state: TrainingState): boolean {
   return state.current === null;
 }
 
-function reveal(state: TrainingState, result: Result, notes?: string): TrainingState {
+function reveal(
+  state: TrainingState,
+  result: Result,
+  checked?: { notes: string; answer: string },
+): TrainingState {
   if (!state.current || state.current.phase !== 'question') return state;
   return {
     ...state,
@@ -62,7 +68,7 @@ function reveal(state: TrainingState, result: Result, notes?: string): TrainingS
       card: state.current.card,
       phase: 'revealed',
       pending: result,
-      ...(notes !== undefined && { notes }),
+      ...checked,
     },
   };
 }
@@ -102,7 +108,7 @@ export function trainingReducer(state: TrainingState, action: TrainingAction): T
     case 'know':
       return reveal(state, 'pass');
     case 'answer-checked':
-      return reveal(state, action.result, action.notes);
+      return reveal(state, action.result, { notes: action.notes, answer: action.answer });
     case 'change-result': {
       if (!state.current || state.current.phase !== 'revealed') return state;
       return { ...state, current: { ...state.current, pending: action.result } };

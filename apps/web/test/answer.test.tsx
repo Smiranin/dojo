@@ -5,7 +5,7 @@ import { FakeDojo } from './fake-server.js';
 import { renderApp } from './render.js';
 
 describe('Answer with the Sensei', () => {
-  it('posts a Rep with the Sensei Result and shows the notes, without a confirm tap', async () => {
+  it('posts a Rep with the Sensei Result and shows the answer with the notes, without a confirm tap', async () => {
     const dojo = new FakeDojo();
     dojo.checks.push({ result: 'pass-with-notes', notes: '- say *why* order matters' });
     renderApp('/train?kata=python&scope=due', dojo);
@@ -19,6 +19,9 @@ describe('Answer with the Sensei', () => {
     await user.click(screen.getByRole('button', { name: 'Check with the Sensei' }));
 
     expect(await screen.findByLabelText('Sensei notes')).toHaveTextContent('order matters');
+    expect(screen.getByRole('region', { name: 'Your answer' })).toHaveTextContent(
+      'the interpreter state',
+    );
     expect(screen.getByRole('button', { name: 'Pass with notes' })).toHaveAttribute(
       'aria-pressed',
       'true',

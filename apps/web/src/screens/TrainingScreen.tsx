@@ -5,6 +5,7 @@ import { api } from '../api/client.js';
 import { ConfirmButton } from '../components/ConfirmButton.js';
 import { Shell } from '../components/Shell.js';
 import { Button } from '../components/ui/button.js';
+import { ErrorText } from '../components/ui/error-text.js';
 import { AuthoringSheet, type AuthoringRequest } from '../features/sensei/AuthoringSheet.js';
 import { useSenseiAvailability } from '../features/sensei/useSenseiAvailability.js';
 import { AnswerSheet } from '../features/training/AnswerSheet.js';
@@ -161,7 +162,13 @@ function TrainingSession({
         </div>
       ) : (
         <>
-          <CardAnswer card={card} {...(current.notes !== undefined && { notes: current.notes })} />
+          <CardAnswer
+            card={card}
+            {...(current.notes !== undefined &&
+              current.answer !== undefined && {
+                checked: { notes: current.notes, answer: current.answer },
+              })}
+          />
           <div className="mt-auto flex flex-col gap-3">
             <Button
               variant="outline"
@@ -206,11 +213,7 @@ function TrainingSession({
                 onConfirm={() => void deleteCurrent()}
               />
             </div>
-            {deleteError && (
-              <p role="alert" className="text-destructive text-sm">
-                {deleteError}
-              </p>
-            )}
+            {deleteError && <ErrorText>{deleteError}</ErrorText>}
             <ResultBar value={current.pending ?? 'pass'} onChange={training.changeResult} />
             <Button size="lg" onClick={training.next}>
               Next
@@ -225,9 +228,9 @@ function TrainingSession({
         cardId={current.card}
         open={sheet === 'answer'}
         onClose={() => setSheet(null)}
-        onChecked={(result, notes) => {
+        onChecked={(result, notes, answer) => {
           setSheet(null);
-          training.answerChecked(result, notes);
+          training.answerChecked(result, notes, answer);
         }}
       />
       <AuthoringSheet request={authoring} onClose={() => setAuthoring(null)} />

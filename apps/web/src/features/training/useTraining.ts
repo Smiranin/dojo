@@ -19,7 +19,7 @@ export interface TrainingHandle {
   know(): void;
   skip(): void;
   drop(): void;
-  answerChecked(result: Result, notes: string): void;
+  answerChecked(result: Result, notes: string, answer: string): void;
   changeResult(result: Result): void;
   next(): void;
   end(): void;
@@ -49,7 +49,8 @@ export function useTraining(cards: CardId[]): TrainingHandle {
     skip: useCallback(() => dispatch({ type: 'skip' }), []),
     drop: useCallback(() => dispatch({ type: 'drop' }), []),
     answerChecked: useCallback(
-      (result: Result, notes: string) => dispatch({ type: 'answer-checked', result, notes }),
+      (result: Result, notes: string, answer: string) =>
+        dispatch({ type: 'answer-checked', result, notes, answer }),
       [],
     ),
     changeResult: useCallback((result: Result) => dispatch({ type: 'change-result', result }), []),

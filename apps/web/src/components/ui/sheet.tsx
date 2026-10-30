@@ -25,7 +25,7 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          'bg-background fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-xl flex-col gap-4 rounded-t-2xl border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg',
+          'bg-background fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-xl flex-col gap-4 rounded-t-2xl md:max-w-3xl border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg',
           className,
         )}
         {...props}
@@ -50,7 +50,7 @@ function SheetContent({
             <XIcon className="size-5" />
           </SheetPrimitive.Close>
         </div>
-        <div className="flex flex-col gap-4 overflow-y-auto">{children}</div>
+        <div className="flex flex-col gap-4 overflow-x-hidden overflow-y-auto">{children}</div>
       </SheetPrimitive.Content>
     </SheetPrimitive.Portal>
   );

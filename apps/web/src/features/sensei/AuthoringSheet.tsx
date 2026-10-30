@@ -2,6 +2,8 @@ import type { AuthorKind, ChatTurn, SenseiAuthorResponse } from '@dojo/core';
 import { useState } from 'react';
 import { api } from '../../api/client.js';
 import { Button } from '../../components/ui/button.js';
+import { Field } from '../../components/ui/field.js';
+import { Select } from '../../components/ui/select.js';
 import { Sheet, SheetContent } from '../../components/ui/sheet.js';
 import { Textarea } from '../../components/ui/textarea.js';
 import { useDojoState, useSync } from '../../store/context.js';
@@ -110,13 +112,10 @@ export function AuthoringSheet({ request, onClose, onDone }: AuthoringSheetProps
         ) : (
           <>
             {needsKata && !request.kataId && (
-              <label className="flex flex-col gap-1 text-sm">
-                Kata
-                <select
-                  aria-label="Kata"
+              <Field label="Kata">
+                <Select
                   value={kataId}
                   onChange={(event) => setKataId(event.target.value)}
-                  className="border-input bg-background h-10 rounded-md border px-3"
                   disabled={busy}
                 >
                   <option value="">Choose a Kata</option>
@@ -125,28 +124,24 @@ export function AuthoringSheet({ request, onClose, onDone }: AuthoringSheetProps
                       {k.title}
                     </option>
                   ))}
-                </select>
-              </label>
+                </Select>
+              </Field>
             )}
             {request.context?.note && (
               <blockquote className="bg-secondary rounded-md px-3 py-2 text-sm">
                 {request.context.note}
               </blockquote>
             )}
-            <Textarea
-              aria-label="Instruction"
-              placeholder={PLACEHOLDER[request.kind]}
-              value={instruction}
-              onChange={(event) => setInstruction(event.target.value)}
-              disabled={busy}
-              rows={4}
-              autoFocus
-            />
-            {error && (
-              <p role="alert" className="text-destructive text-sm">
-                {error}
-              </p>
-            )}
+            <Field label="Instruction" hideLabel error={error}>
+              <Textarea
+                placeholder={PLACEHOLDER[request.kind]}
+                value={instruction}
+                onChange={(event) => setInstruction(event.target.value)}
+                disabled={busy}
+                rows={4}
+                autoFocus
+              />
+            </Field>
             {busy ? (
               <SenseiWaiting label="The Sensei is writing…" />
             ) : (

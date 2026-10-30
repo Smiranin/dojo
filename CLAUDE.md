@@ -8,7 +8,7 @@ A personal, mobile-first interview trainer: Katas hold Cards, Training runs Card
 - `packages/sensei-claude`: the Sensei on the Claude Agent SDK. The only package that imports the SDK.
 - `apps/server`: Fastify composition root; reads and writes `content/` and `data/`, watches them, streams change events, exposes the Sensei. Binds to `127.0.0.1` unless `DOJO_HOST` says otherwise.
 - `apps/web`: the React app for the phone.
-- `content/`: one folder per Kata, `kata.md` plus one `.md` per Card. `data/`: `reps.jsonl` (append-only) and `inbox.json`.
+- `content/`: one folder per Kata, `kata.md` plus one `.md` per Card; the file format and the writing rules are in `content/README.md`, read it before writing or editing content. `data/`: `reps.jsonl` (append-only) and `inbox.json`.
 
 ## Commands
 

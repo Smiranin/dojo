@@ -9,6 +9,7 @@ import { useSenseiAvailability } from '../features/sensei/useSenseiAvailability.
 import { deviceTimeZone } from '../lib/utils.js';
 import { useDojoState } from '../store/context.js';
 import { Input } from '../components/ui/input.js';
+import { Select } from '../components/ui/select.js';
 import {
   effectiveInbox,
   homeStats,
@@ -69,15 +70,15 @@ export function HomeScreen() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <select
+        <Select
           aria-label="Sort"
           value={sort}
           onChange={(event) => setSort(event.target.value as KataSort)}
-          className="border-input bg-background h-10 rounded-md border px-2 text-sm"
+          className="w-auto"
         >
           <option value="name">By name</option>
           <option value="due">By Due</option>
-        </select>
+        </Select>
       </div>
       {!state.loaded ? (
         <p className="text-muted-foreground">Loading…</p>

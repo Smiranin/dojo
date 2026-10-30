@@ -64,9 +64,14 @@ describe('trainingReducer', () => {
     expect(isFinished(state)).toBe(true);
   });
 
-  it('answer-checked reveals with the Sensei Result and notes', () => {
+  it('answer-checked reveals with the Sensei Result, the notes and the answer', () => {
     const state = run(createTraining([A]), [
-      { type: 'answer-checked', result: 'pass-with-notes', notes: 'Mention stability.' },
+      {
+        type: 'answer-checked',
+        result: 'pass-with-notes',
+        notes: 'Mention stability.',
+        answer: 'Keys identify items.',
+      },
     ]);
 
     expect(state.current).toEqual({
@@ -74,6 +79,7 @@ describe('trainingReducer', () => {
       phase: 'revealed',
       pending: 'pass-with-notes',
       notes: 'Mention stability.',
+      answer: 'Keys identify items.',
     });
   });
 

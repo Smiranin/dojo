@@ -71,7 +71,7 @@ On the phone open `https://<mac-name>.<tailnet>.ts.net`, then Safari: Share → 
 
 ### Files
 
-- `content/<kata>/kata.md` declares the Kata and its Tags; `content/<kata>/<slug>.md` is one Card. Edit on the laptop with any editor or Claude Code; the phone sees the change within seconds.
+- `content/<kata>/kata.md` declares the Kata and its Tags; `content/<kata>/<slug>.md` is one Card. The format is described in [`content/README.md`](content/README.md). Edit on the laptop with any editor or Claude Code; the phone sees the change within seconds.
 - `data/reps.jsonl` is the append-only Rep log; `data/inbox.json` holds the Inbox. Both are committed by hand; the Dojo never runs git.
 - `dojo.yaml` holds the scheduling intervals, the bind address and the Sensei timeout.
 
