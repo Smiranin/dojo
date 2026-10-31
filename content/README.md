@@ -107,6 +107,18 @@ serves (`GET /api/content`, field `issues`) and the Dojo does the safest thing:
 - A Tag that the Kata does not declare is dropped from the Card. Add it to `kata.md` first.
 - A broken front matter (unclosed `---`, bad YAML) excludes that file.
 
+## Check your files
+
+After adding or editing files, run this from the repository root:
+
+```sh
+mise run content:check
+```
+
+It reads the folder with the same code the server uses, prints every problem with its file, and
+exits with code 1 when there is one. The server does not need to be running. Fix what it lists,
+then run it again until it reports `0 issues`.
+
 ## The Sensei writes here too
 
 "Add Cards", "New Kata", "Fix this Card" and "Save chat as Card" in the Dojo write the same files

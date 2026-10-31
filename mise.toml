@@ -29,6 +29,10 @@ description = "Run the server, which also serves the built web app"
 depends = ["build"]
 run = "pnpm --filter @dojo/server start"
 
+[tasks."content:check"]
+description = "Validate the content folder (or a folder given as argument) without starting the server"
+run = "pnpm --filter @dojo/server check:content"
+
 [tasks.typecheck]
 description = "Type-check every package"
 run = "pnpm typecheck"

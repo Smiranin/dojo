@@ -15,6 +15,7 @@ A personal, mobile-first interview trainer: Katas hold Cards, Training runs Card
 - `mise run setup`: install dependencies (Node and pnpm versions come from `mise.toml`).
 - `mise run dev`: server on `127.0.0.1:4800` plus the Vite dev server. `DOJO_HOST=0.0.0.0 mise run dev:server` exposes the server on the LAN for a phone.
 - `mise run check`: typecheck, lint, format check and tests. Must pass before every commit.
+- `mise run content:check`: validates `content/` without the server. Run it after writing or editing Katas or Cards.
 - `pnpm --filter @dojo/core test`: tests of one package.
 
 ## Hard rules
