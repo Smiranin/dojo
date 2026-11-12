@@ -1,5 +1,7 @@
 import { PencilLineIcon } from 'lucide-react';
 import { useState } from 'react';
+import { appendDictated } from '../features/dictation/append.js';
+import { DictationButton } from '../features/dictation/DictationButton.js';
 import { newId } from '../lib/utils.js';
 import { useSync } from '../store/context.js';
 import { Button } from './ui/button.js';
@@ -44,6 +46,9 @@ export function QuickNoteButton() {
               }}
             />
           </Field>
+          <DictationButton
+            onText={(dictated) => setText((current) => appendDictated(current, dictated))}
+          />
           <Button size="lg" onClick={save} disabled={text.trim() === ''}>
             Save note
           </Button>

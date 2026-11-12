@@ -15,3 +15,5 @@ scheduling:
 sensei:
   timeoutMs: 120000
   # model: optional, the Claude Code default when absent
+# kobzar:
+#   url: https://<mac-name>.<tailnet>.ts.net:8443 # optional; no microphone button without it. DOJO_KOBZAR_URL overrides it

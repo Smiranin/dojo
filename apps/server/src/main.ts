@@ -30,7 +30,11 @@ async function main(): Promise<void> {
     onEnvStripped: (keys) => stripped.push(...keys),
   });
   const { app } = await buildApp({
-    settings: { scheduling: config.scheduling, sensei: config.sensei },
+    settings: {
+      scheduling: config.scheduling,
+      sensei: config.sensei,
+      ...(config.kobzar !== undefined && { kobzar: config.kobzar }),
+    },
     contentDir,
     dataDir,
     sensei,

@@ -226,6 +226,7 @@ function TrainingSession({
       )}
       <AnswerSheet
         cardId={current.card}
+        kataId={card.kataId}
         open={sheet === 'answer'}
         onClose={() => setSheet(null)}
         onChecked={(result, notes, answer) => {
@@ -236,6 +237,7 @@ function TrainingSession({
       <AuthoringSheet request={authoring} onClose={() => setAuthoring(null)} />
       <FollowUpSheet
         cardId={current.card}
+        kataId={card.kataId}
         open={sheet === 'chat'}
         onClose={() => setSheet(null)}
         history={history}

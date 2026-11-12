@@ -1,3 +1,4 @@
+import { defaultSettings } from '@dojo/core';
 import { FakeSensei } from '@dojo/core/testing';
 import { afterEach, describe, expect, it } from 'vitest';
 import { testServer, type TestServer } from './helpers.js';
@@ -38,5 +39,23 @@ describe('health and settings', () => {
     const response = await s.app.inject({ method: 'GET', url: '/api/settings' });
 
     expect(response.json()).toMatchObject({ scheduling: { firstPassDays: 7, knownDays: 21 } });
+  });
+
+  it('serves the address of Kobzar when it is configured', async () => {
+    s = await testServer({
+      settings: { ...defaultSettings(), kobzar: { url: 'https://kobzar.test' } },
+    });
+
+    const response = await s.app.inject({ method: 'GET', url: '/api/settings' });
+
+    expect(response.json().kobzar).toEqual({ url: 'https://kobzar.test' });
+  });
+
+  it('serves no kobzar key when Kobzar is not configured', async () => {
+    s = await testServer();
+
+    const response = await s.app.inject({ method: 'GET', url: '/api/settings' });
+
+    expect(response.json()).not.toHaveProperty('kobzar');
   });
 });

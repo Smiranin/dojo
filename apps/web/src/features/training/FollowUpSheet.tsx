@@ -6,10 +6,14 @@ import { Button } from '../../components/ui/button.js';
 import { Field } from '../../components/ui/field.js';
 import { Sheet, SheetContent } from '../../components/ui/sheet.js';
 import { Textarea } from '../../components/ui/textarea.js';
+import { appendDictated } from '../dictation/append.js';
+import { DictationButton } from '../dictation/DictationButton.js';
 import { SenseiWaiting } from '../sensei/SenseiWaiting.js';
 
 export interface FollowUpSheetProps {
   cardId: string;
+  /** The Card's Kata; its title and Tags help Kobzar recognise a dictated question. */
+  kataId: string;
   open: boolean;
   onClose(): void;
   /** The conversation lives in the parent so it survives closing the sheet and dies with the Card. */
@@ -18,7 +22,14 @@ export interface FollowUpSheetProps {
 }
 
 /** A stateless chat about the current Card: every message carries the whole history. */
-export function FollowUpSheet({ cardId, open, onClose, history, onHistory }: FollowUpSheetProps) {
+export function FollowUpSheet({
+  cardId,
+  kataId,
+  open,
+  onClose,
+  history,
+  onHistory,
+}: FollowUpSheetProps) {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +84,11 @@ export function FollowUpSheet({ cardId, open, onClose, history, onHistory }: Fol
             placeholder="Ask about this Card"
           />
         </Field>
+        <DictationButton
+          kataId={kataId}
+          disabled={busy}
+          onText={(dictated) => setText((current) => appendDictated(current, dictated))}
+        />
         <Button onClick={() => void send()} disabled={busy || text.trim() === ''}>
           Send
         </Button>

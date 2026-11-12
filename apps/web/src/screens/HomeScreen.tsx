@@ -1,4 +1,4 @@
-import { InboxIcon, PinIcon, PlusIcon } from 'lucide-react';
+import { InboxIcon, PinIcon, PlusIcon, SettingsIcon } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { Shell } from '../components/Shell.js';
@@ -6,8 +6,9 @@ import { Button } from '../components/ui/button.js';
 import { Card, CardDescription, CardTitle } from '../components/ui/card.js';
 import { AuthoringSheet, type AuthoringRequest } from '../features/sensei/AuthoringSheet.js';
 import { useSenseiAvailability } from '../features/sensei/useSenseiAvailability.js';
+import { SettingsSheet } from '../features/settings/SettingsSheet.js';
 import { deviceTimeZone } from '../lib/utils.js';
-import { useDojoState } from '../store/context.js';
+import { useDojoState, useKobzarAvailability } from '../store/context.js';
 import { Input } from '../components/ui/input.js';
 import { Select } from '../components/ui/select.js';
 import {
@@ -29,6 +30,9 @@ export function HomeScreen() {
   const sensei = useSenseiAvailability();
   const [authoring, setAuthoring] = useState<AuthoringRequest | null>(null);
   const inboxCount = effectiveInbox(state).length;
+  // The only setting is the dictation language, so without Kobzar there is nothing to open.
+  const hasSettings = useKobzarAvailability().kind !== 'absent';
+  const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <Shell
       title="Dojo"
@@ -49,6 +53,16 @@ export function HomeScreen() {
               {inboxCount > 0 && <span className="text-xs">{inboxCount}</span>}
             </Link>
           </Button>
+          {hasSettings && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Settings"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <SettingsIcon />
+            </Button>
+          )}
         </>
       }
     >
@@ -113,6 +127,7 @@ export function HomeScreen() {
         </ul>
       )}
       <AuthoringSheet request={authoring} onClose={() => setAuthoring(null)} />
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </Shell>
   );
 }

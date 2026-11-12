@@ -19,10 +19,17 @@ export const senseiSettingsSchema = z.object({
 });
 export type SenseiSettings = z.infer<typeof senseiSettingsSchema>;
 
-/** What the web needs to derive Due and Belt; served by `GET /api/settings`. */
+export const kobzarSettingsSchema = z.object({
+  /** Where the web app finds Kobzar; absent means no microphone button (ADR 0005). */
+  url: z.url({ protocol: /^https?$/ }),
+});
+export type KobzarSettings = z.infer<typeof kobzarSettingsSchema>;
+
+/** What the web needs to derive Due and Belt and to find Kobzar; served by `GET /api/settings`. */
 export const settingsSchema = z.object({
   scheduling: schedulingSettingsSchema.prefault({}),
   sensei: senseiSettingsSchema.prefault({}),
+  kobzar: kobzarSettingsSchema.optional(),
 });
 export type Settings = z.infer<typeof settingsSchema>;
 

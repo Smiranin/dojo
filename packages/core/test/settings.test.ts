@@ -28,6 +28,22 @@ describe('settings schema', () => {
     expect(config.contentDir).toBe('./content');
   });
 
+  it('accepts an http or https address of Kobzar', () => {
+    const fileWithKobzar = { kobzar: { url: 'https://mac.tailnet.ts.net:8443' } };
+
+    const config = dojoConfigSchema.parse(fileWithKobzar);
+
+    expect(config.kobzar).toEqual({ url: 'https://mac.tailnet.ts.net:8443' });
+  });
+
+  it('rejects an address of Kobzar that is not a URL or not http(s)', () => {
+    const notAUrl = dojoConfigSchema.safeParse({ kobzar: { url: 'the mac' } });
+    const wrongScheme = dojoConfigSchema.safeParse({ kobzar: { url: 'ftp://mac.tailnet.ts.net' } });
+
+    expect(notAUrl.success).toBe(false);
+    expect(wrongScheme.success).toBe(false);
+  });
+
   it('rejects a non-positive interval', () => {
     const fileWithZeroMinDays = { scheduling: { minDays: 0 } };
 

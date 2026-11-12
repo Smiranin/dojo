@@ -32,6 +32,33 @@ describe('loadSettings', () => {
     expect(loaded.config.host).toBe('127.0.0.1');
   });
 
+  it('reads the address of Kobzar from the file and lets DOJO_KOBZAR_URL override it', async () => {
+    const path = join(dir, 'dojo.yaml');
+    await writeFile(path, 'kobzar:\n  url: https://file.test\n');
+
+    const fromFile = await loadSettings(path, {});
+    const fromEnv = await loadSettings(path, { DOJO_KOBZAR_URL: 'https://env.test:8443' });
+
+    expect(fromFile.config.kobzar).toEqual({ url: 'https://file.test' });
+    expect(fromEnv.config.kobzar).toEqual({ url: 'https://env.test:8443' });
+  });
+
+  it('has no address of Kobzar unless the file or the environment names one', async () => {
+    const path = join(dir, 'dojo.yaml');
+    await writeFile(path, 'port: 4800\n');
+
+    const loaded = await loadSettings(path, { DOJO_KOBZAR_URL: '' });
+
+    expect(loaded.config.kobzar).toBeUndefined();
+  });
+
+  it('fails when DOJO_KOBZAR_URL is not an http(s) address', async () => {
+    const path = join(dir, 'dojo.yaml');
+    await writeFile(path, 'port: 4800\n');
+
+    await expect(loadSettings(path, { DOJO_KOBZAR_URL: 'the mac' })).rejects.toThrow(SettingsError);
+  });
+
   it('fails with the path and the field when the file is wrong', async () => {
     const path = join(dir, 'dojo.yaml');
     await writeFile(path, 'scheduling:\n  minDays: zero\n');

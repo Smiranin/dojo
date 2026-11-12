@@ -67,13 +67,13 @@ On the phone open `https://<mac-name>.<tailnet>.ts.net`, then Safari: Share → 
 
 - Stop with Ctrl-C in the terminal running `mise run start`; `tailscale serve reset` removes the serve rule.
 - Update with `git pull && mise run setup && mise run start`.
-- When the Mac is asleep or the server is down, the Dojo shows "The Dojo server is unreachable" and retries; nothing else works and nothing is cached on the phone. Reps made during a short blip are retried in memory and are lost only if the page is closed while the banner shows them unsaved.
+- When the Mac is asleep or the server is down, the Dojo shows "The Dojo server is unreachable" and retries; nothing else works and nothing is cached on the phone. The phone keeps a single preference, the dictation language, and nothing else. Reps made during a short blip are retried in memory and are lost only if the page is closed while the banner shows them unsaved.
 
 ### Files
 
 - `content/<kata>/kata.md` declares the Kata and its Tags; `content/<kata>/<slug>.md` is one Card. The format is described in [`content/README.md`](content/README.md). Edit on the laptop with any editor or Claude Code; the phone sees the change within seconds.
 - `data/reps.jsonl` is the append-only Rep log; `data/inbox.json` holds the Inbox. Both are committed by hand; the Dojo never runs git.
-- `dojo.yaml` holds the scheduling intervals, the bind address and the Sensei timeout.
+- `dojo.yaml` holds the scheduling intervals, the bind address, the Sensei timeout and, optionally, the address of Kobzar (`kobzar.url`) for dictation. `DOJO_KOBZAR_URL` overrides it; use the variable for a tailnet address so it is never committed.
 
 ### Checks
 

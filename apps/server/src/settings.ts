@@ -18,7 +18,7 @@ export class SettingsError extends Error {
   }
 }
 
-/** Loads `dojo.yaml`; `DOJO_HOST` and `DOJO_PORT` in `env` override the file. */
+/** Loads `dojo.yaml`; `DOJO_HOST`, `DOJO_PORT` and `DOJO_KOBZAR_URL` in `env` override the file. */
 export async function loadSettings(
   path: string,
   env: Record<string, string | undefined>,
@@ -41,6 +41,8 @@ export async function loadSettings(
       throw new SettingsError(`DOJO_PORT is not a number: ${env.DOJO_PORT}`);
     overrides.port = port;
   }
+  // The address of Kobzar is the owner's tailnet name; the variable keeps it out of the committed file.
+  if (env.DOJO_KOBZAR_URL) overrides.kobzar = { url: env.DOJO_KOBZAR_URL };
   const parsed = dojoConfigSchema.safeParse({ ...(raw as Record<string, unknown>), ...overrides });
   if (!parsed.success) throw new SettingsError(`${path}: ${z.prettifyError(parsed.error)}`);
   const base = dirname(resolve(path));

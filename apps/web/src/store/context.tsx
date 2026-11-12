@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import type { KobzarAvailability, KobzarWatch } from '../features/dictation/kobzar-watch.js';
 import { useStore } from '../lib/store.js';
 import type { DojoState, DojoStore } from './dojo-store.js';
 import type { SyncClient } from './sync.js';
@@ -6,6 +7,7 @@ import type { SyncClient } from './sync.js';
 export interface DojoRuntime {
   store: DojoStore;
   sync: SyncClient;
+  kobzar: KobzarWatch;
 }
 
 const DojoContext = createContext<DojoRuntime | null>(null);
@@ -13,7 +15,11 @@ const DojoContext = createContext<DojoRuntime | null>(null);
 export function DojoProvider({ runtime, children }: { runtime: DojoRuntime; children: ReactNode }) {
   useEffect(() => {
     void runtime.sync.start();
-    return () => runtime.sync.stop();
+    runtime.kobzar.start();
+    return () => {
+      runtime.sync.stop();
+      runtime.kobzar.stop();
+    };
   }, [runtime]);
   return <DojoContext.Provider value={runtime}>{children}</DojoContext.Provider>;
 }
@@ -30,4 +36,13 @@ export function useDojoState(): DojoState {
 
 export function useSync(): SyncClient {
   return useRuntime().sync;
+}
+
+export function useKobzar(): KobzarWatch {
+  return useRuntime().kobzar;
+}
+
+/** Whether a dictation can start now; one answer for every microphone button. */
+export function useKobzarAvailability(): KobzarAvailability {
+  return useStore(useKobzar().store);
 }

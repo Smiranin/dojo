@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { defaultSettings, type Rep } from '@dojo/core';
+import { defaultSettings, type Rep, type Settings } from '@dojo/core';
 import { FakeSensei, sampleContent, type FixtureFile } from '@dojo/core/testing';
 import type { FastifyInstance } from 'fastify';
 import { buildApp, REPS_FILE, type BuiltApp } from '../src/app.js';
@@ -21,6 +21,8 @@ export interface TestServerOptions {
   reps?: Rep[];
   sensei?: FakeSensei;
   healthTtlMs?: number;
+  /** What `GET /api/settings` serves; the defaults when absent. */
+  settings?: Settings;
 }
 
 export async function writeContent(contentDir: string, files: FixtureFile[]): Promise<void> {
@@ -44,7 +46,7 @@ export async function testServer(options: TestServerOptions = {}): Promise<TestS
   }
   const sensei = options.sensei ?? new FakeSensei();
   const built = await buildApp({
-    settings: defaultSettings(),
+    settings: options.settings ?? defaultSettings(),
     contentDir,
     dataDir,
     sensei,

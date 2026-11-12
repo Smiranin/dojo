@@ -7,6 +7,8 @@ import { Select } from '../../components/ui/select.js';
 import { Sheet, SheetContent } from '../../components/ui/sheet.js';
 import { Textarea } from '../../components/ui/textarea.js';
 import { useDojoState, useSync } from '../../store/context.js';
+import { appendDictated } from '../dictation/append.js';
+import { DictationButton } from '../dictation/DictationButton.js';
 import { SenseiWaiting } from './SenseiWaiting.js';
 
 export interface AuthoringRequest {
@@ -142,6 +144,12 @@ export function AuthoringSheet({ request, onClose, onDone }: AuthoringSheetProps
                 autoFocus
               />
             </Field>
+            <DictationButton
+              // The Kata the request is about, or the one picked here; a new Kata has none yet.
+              kataId={needsKata && chosenKata !== '' ? chosenKata : undefined}
+              disabled={busy}
+              onText={(dictated) => setInstruction((current) => appendDictated(current, dictated))}
+            />
             {busy ? (
               <SenseiWaiting label="The Sensei is writing…" />
             ) : (
