@@ -186,6 +186,21 @@ describe('Dictation', () => {
     expect(screen.queryByRole('button', { name: 'Retry dictation' })).not.toBeInTheDocument();
   });
 
+  it('shows Kobzar’s message when Kobzar fails inside itself', async () => {
+    withMicrophone();
+    const kobzar = new FakeKobzar();
+    const message = 'Kobzar failed inside itself.';
+    kobzar.transcripts.push({ status: 500, code: 'internal_error', message });
+    renderApp(TRAINING, new FakeDojo(), { kobzar });
+    const user = userEvent.setup();
+    await openAnswerSheet(user);
+
+    await startDictation(user);
+    await user.click(screen.getByRole('button', { name: 'Stop dictation' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+  });
+
   it('disables the button with a note while Kobzar is down and enables it when Kobzar is back', async () => {
     withMicrophone();
     const kobzar = new FakeKobzar();

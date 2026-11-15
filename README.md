@@ -73,7 +73,7 @@ On the phone open `https://<mac-name>.<tailnet>.ts.net`, then Safari: Share → 
 
 - `content/<kata>/kata.md` declares the Kata and its Tags; `content/<kata>/<slug>.md` is one Card. The format is described in [`content/README.md`](content/README.md). Edit on the laptop with any editor or Claude Code; the phone sees the change within seconds.
 - `data/reps.jsonl` is the append-only Rep log; `data/inbox.json` holds the Inbox. Both are committed by hand; the Dojo never runs git.
-- `dojo.yaml` holds the scheduling intervals, the bind address, the Sensei timeout and, optionally, the address of Kobzar (`kobzar.url`) for dictation. `DOJO_KOBZAR_URL` overrides it; use the variable for a tailnet address so it is never committed.
+- `dojo.yaml` holds the scheduling intervals, the bind address, the Sensei timeout and, optionally, the address of Kobzar (`kobzar.url`) for dictation. `DOJO_KOBZAR_URL` overrides it; use the variable for a tailnet address so it is never committed, e.g. in `mise.local.toml` (ignored by git) under `[env]`, which `mise run start` and `mise run dev` load.
 
 ### Checks
 

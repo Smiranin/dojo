@@ -24,6 +24,7 @@ const KOBZAR_OWN_ERROR_CODES = [
   'busy',
   'not_ready',
   'recognition_failed',
+  'internal_error',
 ] as const;
 
 export type KobzarErrorCode =
@@ -114,7 +115,7 @@ function errorOf(status: number, body: unknown): KobzarError {
   return new KobzarError(code, message || `Kobzar refused the request: ${code}.`);
 }
 
-/** `recording.webm` or `recording.mp4`: Kobzar picks the decoder hint from the extension. */
+/** `recording.webm` or `recording.mp4`: Kobzar decodes by content and does not read the name. */
 function recordingFileName(recording: Blob): string {
   return recording.type.includes('mp4') ? 'recording.mp4' : 'recording.webm';
 }
