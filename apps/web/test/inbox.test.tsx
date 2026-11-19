@@ -56,3 +56,48 @@ describe('Inbox', () => {
     await waitFor(() => expect(dojo.inbox).toEqual([]));
   });
 });
+
+describe('Quick note input', () => {
+  /** Opens the Quick note on Home and returns its text field. */
+  async function openQuickNote(user: ReturnType<typeof userEvent.setup>): Promise<HTMLElement> {
+    await screen.findByRole('list', { name: 'Katas' });
+    await user.click(screen.getByRole('button', { name: 'Quick note' }));
+    return screen.getByRole('textbox', { name: 'Note' });
+  }
+
+  it('saves on Cmd+Enter', async () => {
+    const { dojo } = renderApp('/');
+    const user = userEvent.setup();
+    const field = await openQuickNote(user);
+
+    await user.type(field, 'ask about Suspense');
+    await user.keyboard('{Meta>}{Enter}{/Meta}');
+
+    await waitFor(() => expect(dojo.inbox).toMatchObject([{ text: 'ask about Suspense' }]));
+  });
+
+  it('starts a new line on Enter and saves nothing', async () => {
+    const { dojo } = renderApp('/');
+    const user = userEvent.setup();
+    const field = await openQuickNote(user);
+
+    await user.type(field, 'first{Enter}second');
+
+    expect(field).toHaveValue('first\nsecond');
+    expect(dojo.inbox).toEqual([]);
+    expect(dojo.requests).toEqual([]);
+  });
+
+  it('keeps the arrow disabled while the note is empty', async () => {
+    const user = userEvent.setup();
+    renderApp('/');
+    const field = await openQuickNote(user);
+    const save = screen.getByRole('button', { name: 'Save note' });
+
+    expect(save).toBeDisabled();
+    await user.type(field, '   ');
+    expect(save).toBeDisabled();
+    await user.type(field, 'x');
+    expect(save).toBeEnabled();
+  });
+});

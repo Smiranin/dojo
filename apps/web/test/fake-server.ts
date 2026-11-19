@@ -3,11 +3,11 @@ import {
   parseKataFile,
   defaultSettings,
   type Card,
-  type CheckOutput,
   type ContentIssue,
   type ContentSnapshot,
   type InboxNote,
   type Kata,
+  type KumiteOutput,
   type Rep,
   type SenseiAuthorResponse,
   type Settings,
@@ -43,6 +43,8 @@ export interface RecordedRequest {
   method: string;
   url: string;
   body: unknown;
+  /** The client gave up on the request before it was answered. */
+  aborted?: boolean;
 }
 
 /** The server's state as msw serves it; tests mutate it and read the recorded requests. */
@@ -53,10 +55,26 @@ export class FakeDojo {
   inbox: InboxNote[] = [];
   senseiOk = true;
   /** Scripted answers for the Sensei routes; an empty queue answers 503. */
-  readonly checks: CheckOutput[] = [];
+  readonly kumites: KumiteOutput[] = [];
   readonly replies: string[] = [];
   readonly authored: SenseiAuthorResponse[] = [];
   readonly requests: RecordedRequest[] = [];
+  private gate: Promise<void> | null = null;
+
+  /**
+   * Makes every Sensei route wait after it recorded the request until the returned function
+   * is called, so a test can see the waiting state and leave the Card mid-request.
+   */
+  hold(): () => void {
+    let release!: () => void;
+    this.gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    return () => {
+      this.gate = null;
+      release();
+    };
+  }
 
   constructor(files: FixtureFile[] = sampleContent()) {
     this.snapshot = snapshotOf(files);
@@ -70,7 +88,21 @@ export class FakeDojo {
       } catch {
         body = undefined;
       }
-      this.requests.push({ method: request.method, url: new URL(request.url).pathname, body });
+      const recorded: RecordedRequest = {
+        method: request.method,
+        url: new URL(request.url).pathname,
+        body,
+      };
+      this.requests.push(recorded);
+      request.signal.addEventListener('abort', () => {
+        recorded.aborted = true;
+      });
+      return body;
+    };
+    /** Records a Sensei request and waits while the Sensei is held. */
+    const recordSensei = async (request: Request): Promise<unknown> => {
+      const body = await record(request);
+      await this.gate;
       return body;
     };
     return [
@@ -121,9 +153,9 @@ export class FakeDojo {
         this.snapshot = { ...this.snapshot, revision: `${this.snapshot.revision}+` };
         return HttpResponse.json(kata);
       }),
-      http.post('/api/sensei/check', async ({ request }) => {
-        await record(request);
-        const output = this.checks.shift();
+      http.post('/api/sensei/kumite', async ({ request }) => {
+        await recordSensei(request);
+        const output = this.kumites.shift();
         if (!output) {
           return HttpResponse.json(
             { reason: 'sensei-unavailable', message: 'no Sensei' },
@@ -133,7 +165,7 @@ export class FakeDojo {
         return HttpResponse.json(output);
       }),
       http.post('/api/sensei/chat', async ({ request }) => {
-        await record(request);
+        await recordSensei(request);
         const reply = this.replies.shift();
         if (!reply) {
           return HttpResponse.json(
@@ -144,7 +176,7 @@ export class FakeDojo {
         return HttpResponse.json({ reply });
       }),
       http.post('/api/sensei/author', async ({ request }) => {
-        await record(request);
+        await recordSensei(request);
         const response = this.authored.shift();
         if (!response) {
           return HttpResponse.json(

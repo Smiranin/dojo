@@ -1,6 +1,15 @@
-import type { AuthorInput, Card, Kata } from '@dojo/core';
+import type { AuthorInput, Card, Chat, Kata } from '@dojo/core';
 import { describe, expect, it } from 'vitest';
-import { authorPrompt, chatPrompt, checkPrompt } from '../src/prompts.js';
+import {
+  AUTHOR_SYSTEM_PROMPT,
+  CHAT_SYSTEM_PROMPT,
+  KATA_LANGUAGE_RULE,
+  KUMITE_SYSTEM_PROMPT,
+  REPLY_LANGUAGE_RULE,
+  authorPrompt,
+  chatPrompt,
+  kumitePrompt,
+} from '../src/prompts.js';
 
 const card: Card = {
   id: 'react/keys',
@@ -19,23 +28,35 @@ const kata: Kata = {
   pinned: false,
   archived: false,
 };
+const afterKumite: Chat = {
+  opening: {
+    kind: 'kumite',
+    kumite: 'so React knows which is which',
+    result: 'pass-with-notes',
+    notes: '- mention state that follows the item',
+  },
+  turns: [],
+};
 
 describe('prompts', () => {
-  it('puts the whole Card and the learner answer in the check prompt', () => {
-    const prompt = checkPrompt({ card, answer: 'so React knows which is which' });
+  it('puts the whole Card and the learner Kumite in the Kumite prompt', () => {
+    const prompt = kumitePrompt({ card, kumite: 'so React knows which is which' });
 
     expect(prompt).toContain('## Question\n\nWhy keys?');
     expect(prompt).toContain('## Explanation\n\nReconciliation matches by key.');
-    expect(prompt).toContain("# Learner's answer\n\nso React knows which is which");
+    expect(prompt).toContain("# Learner's Kumite\n\nso React knows which is which");
   });
 
   it('renders the conversation in order for a chat', () => {
     const prompt = chatPrompt({
       card,
-      history: [
-        { role: 'learner', text: 'Why not index?' },
-        { role: 'sensei', text: 'Because order changes.' },
-      ],
+      chat: {
+        opening: { kind: 'self-graded', choice: 'know' },
+        turns: [
+          { role: 'learner', text: 'Why not index?' },
+          { role: 'sensei', text: 'Because order changes.' },
+        ],
+      },
       message: 'And for static lists?',
     });
 
@@ -43,6 +64,91 @@ describe('prompts', () => {
       prompt.indexOf('**Sensei:** Because order changes.'),
     );
     expect(prompt).toContain("# Learner's message\n\nAnd for static lists?");
+  });
+
+  it('puts the Kumite and the verdict before the conversation of a chat', () => {
+    const prompt = chatPrompt({
+      card,
+      chat: {
+        ...afterKumite,
+        turns: [
+          { role: 'learner', text: 'Which state?' },
+          { role: 'sensei', text: 'Local state.' },
+        ],
+      },
+      message: 'Why was my point wrong?',
+    });
+
+    const kumite = prompt.indexOf("# Learner's Kumite\n\nso React knows which is which");
+    const verdict = prompt.indexOf(
+      "# Sensei's verdict\n\nResult: Pass with notes\n\n- mention state that follows the item",
+    );
+    const conversation = prompt.indexOf('# Conversation so far');
+    expect(kumite).toBeGreaterThan(prompt.indexOf('# Card'));
+    expect(verdict).toBeGreaterThan(kumite);
+    expect(conversation).toBeGreaterThan(verdict);
+  });
+
+  it('renders only the Result of a clean Pass', () => {
+    const prompt = chatPrompt({
+      card,
+      chat: {
+        opening: { kind: 'kumite', kumite: 'identity', result: 'pass', notes: '' },
+        turns: [],
+      },
+      message: 'More?',
+    });
+
+    expect(prompt).toContain("# Sensei's verdict\n\nResult: Pass\n\n# Conversation so far");
+  });
+
+  it("tells the Sensei how the learner graded themselves after Know or Don't know", () => {
+    const know = chatPrompt({
+      card,
+      chat: { opening: { kind: 'self-graded', choice: 'know' }, turns: [] },
+      message: 'Tell me more',
+    });
+    const dontKnow = chatPrompt({
+      card,
+      chat: { opening: { kind: 'self-graded', choice: 'dont-know' }, turns: [] },
+      message: 'Explain',
+    });
+
+    expect(know).toContain(
+      '# How the Card was revealed\n\nThe learner chose Know without answering: go deeper than the Card.',
+    );
+    expect(dontKnow).toContain("The learner chose Don't know: explain from scratch.");
+    expect(know).not.toContain("# Learner's Kumite");
+  });
+
+  it('gives a reply the language of the learner and a Card the language of the Kata', () => {
+    expect(KUMITE_SYSTEM_PROMPT).toContain(REPLY_LANGUAGE_RULE);
+    expect(CHAT_SYSTEM_PROMPT).toContain(REPLY_LANGUAGE_RULE);
+    expect(AUTHOR_SYSTEM_PROMPT).toContain(KATA_LANGUAGE_RULE);
+    expect(AUTHOR_SYSTEM_PROMPT).not.toContain(REPLY_LANGUAGE_RULE);
+  });
+
+  it('includes the opening of the chat when a chat becomes Cards', () => {
+    const prompt = authorPrompt({
+      kind: 'from-chat',
+      instruction: '',
+      kata,
+      existingQuestions: ['Why keys?'],
+      context: {
+        chat: {
+          ...afterKumite,
+          turns: [
+            { role: 'learner', text: 'Which state?' },
+            { role: 'sensei', text: 'Local state.' },
+          ],
+        },
+      },
+    });
+
+    expect(prompt).toContain("# Learner's Kumite\n\nso React knows which is which");
+    expect(prompt).toContain('Result: Pass with notes');
+    expect(prompt).toContain('# Conversation\n\n**Learner:** Which state?');
+    expect(prompt).toContain('# Questions already in the Kata (do not repeat)\n\n- Why keys?');
   });
 
   it('lists the allowed Tags, the existing questions and the target for a fix', () => {

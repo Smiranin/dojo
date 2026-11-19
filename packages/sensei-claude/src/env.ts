@@ -1,4 +1,4 @@
-/** Keys that would make Claude Code bill an API key instead of using the login (req. 34). */
+/** Keys that would make Claude Code bill an API key instead of using the login. */
 export const STRIPPED_KEYS = ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN'] as const;
 
 export interface SenseiEnv {

@@ -53,7 +53,7 @@ export function KataScreen() {
       current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag],
     );
 
-  // Flag changes are not retried (PLAN): a failure is shown and the state stays as it was.
+  // Flag changes are not retried: a failure is shown and the state stays as it was.
   const deleteCard = async (slug: string) => {
     setError(null);
     try {

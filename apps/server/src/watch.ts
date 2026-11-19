@@ -24,7 +24,7 @@ export interface Watcher {
 
 /**
  * Watches `content/` and `data/` and publishes one debounced event per changed slice, so a
- * file written on the laptop reaches the phone within a few seconds (SPEC req. 4).
+ * file written on the laptop reaches the phone within a few seconds.
  */
 export function watchFolders(options: WatchOptions): Watcher {
   const debounceMs = options.debounceMs ?? WATCH_DEBOUNCE_MS;

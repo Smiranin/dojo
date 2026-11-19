@@ -22,8 +22,9 @@ export function beltOf(intervalDays: number, repCount: number, settings: Schedul
 }
 
 /**
- * Derives the schedule of one Card from its Reps (ADR 0002): walk them in `at` order, each
- * Result sets the interval, and the Belt follows from the interval. Pure and deterministic.
+ * Derives the schedule of one Card from its Reps, the only progress record: walk them in `at`
+ * order, each Result sets the interval, and the Belt follows from the interval. Pure and
+ * deterministic.
  */
 export function scheduleCard(reps: readonly Rep[], settings: SchedulingSettings): CardSchedule {
   const ordered = [...reps].sort((a, b) => a.at.localeCompare(b.at));

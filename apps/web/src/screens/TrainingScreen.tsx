@@ -1,19 +1,11 @@
-import { DIFFICULTIES, type CardId, type ChatTurn, type Difficulty } from '@dojo/core';
+import { DIFFICULTIES, type CardId, type Difficulty } from '@dojo/core';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { api } from '../api/client.js';
-import { ConfirmButton } from '../components/ConfirmButton.js';
 import { Shell } from '../components/Shell.js';
 import { Button } from '../components/ui/button.js';
-import { ErrorText } from '../components/ui/error-text.js';
-import { AuthoringSheet, type AuthoringRequest } from '../features/sensei/AuthoringSheet.js';
-import { useSenseiAvailability } from '../features/sensei/useSenseiAvailability.js';
-import { AnswerSheet } from '../features/training/AnswerSheet.js';
-import { CardAnswer, CardQuestion } from '../features/training/CardView.js';
-import { FollowUpSheet } from '../features/training/FollowUpSheet.js';
-import { ResultBar } from '../features/training/ResultBar.js';
+import { CardStep } from '../features/training/CardStep.js';
 import { useTraining } from '../features/training/useTraining.js';
-import { useDojoState, useSync } from '../store/context.js';
+import { useDojoState } from '../store/context.js';
 import { cardById, kataOf, trainingCards, type TrainingSelection } from '../store/derive.js';
 
 function selectionFrom(params: URLSearchParams): TrainingSelection {
@@ -61,12 +53,7 @@ function TrainingSession({
   const [cards] = useState<CardId[]>(() => trainingCards(state, selection, new Date()));
   const training = useTraining(cards);
   const pending = state.pendingWrites.length;
-  const sensei = useSenseiAvailability();
-  const sync = useSync();
-  const [sheet, setSheet] = useState<'answer' | 'chat' | null>(null);
-  const [authoring, setAuthoring] = useState<AuthoringRequest | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [chat, setChat] = useState<{ card: CardId; history: ChatTurn[] } | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Reps still being written would be lost with the page; warn before it closes.
   useEffect(() => {
@@ -115,19 +102,6 @@ function TrainingSession({
     );
   }
 
-  const revealed = current.phase === 'revealed';
-  // The follow-up conversation belongs to one Card and is dropped when the Card changes.
-  const history = chat && chat.card === current.card ? chat.history : [];
-  const deleteCurrent = async () => {
-    setDeleteError(null);
-    try {
-      await api.deleteCard(card.kataId, card.slug);
-      training.drop();
-      await sync.refetch('content');
-    } catch (cause) {
-      setDeleteError(cause instanceof Error ? cause.message : String(cause));
-    }
-  };
   return (
     <Shell
       title={`${title} · ${training.remaining} left`}
@@ -137,111 +111,16 @@ function TrainingSession({
           End
         </Button>
       }
+      // The floating Quick note button would cover the Chat's submit arrow.
+      quickNote={!chatOpen}
     >
-      <CardQuestion card={card} />
-      {!revealed ? (
-        <div className="mt-auto grid grid-cols-2 gap-2">
-          <Button size="lg" variant="outline" onClick={training.dontKnow}>
-            Don't know
-          </Button>
-          <Button size="lg" variant="outline" onClick={training.skip}>
-            Skip
-          </Button>
-          <Button
-            size="lg"
-            variant="secondary"
-            disabled={!sensei.available}
-            title={sensei.reason || undefined}
-            onClick={() => setSheet('answer')}
-          >
-            Answer
-          </Button>
-          <Button size="lg" onClick={training.know}>
-            Know
-          </Button>
-        </div>
-      ) : (
-        <>
-          <CardAnswer
-            card={card}
-            {...(current.notes !== undefined &&
-              current.answer !== undefined && {
-                checked: { notes: current.notes, answer: current.answer },
-              })}
-          />
-          <div className="mt-auto flex flex-col gap-3">
-            <Button
-              variant="outline"
-              disabled={!sensei.available}
-              title={sensei.reason || undefined}
-              onClick={() => setSheet('chat')}
-            >
-              Ask the Sensei{history.length > 0 ? ` (${history.length / 2})` : ''}
-            </Button>
-            <div className="flex flex-wrap items-center justify-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={!sensei.available}
-                title={sensei.reason || undefined}
-                onClick={() =>
-                  setAuthoring({ kind: 'fix-card', kataId: card.kataId, cardId: card.id })
-                }
-              >
-                Fix this Card
-              </Button>
-              {history.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={!sensei.available}
-                  title={sensei.reason || undefined}
-                  onClick={() =>
-                    setAuthoring({
-                      kind: 'from-chat',
-                      kataId: card.kataId,
-                      context: { chat: history },
-                    })
-                  }
-                >
-                  Save chat as Card
-                </Button>
-              )}
-              <ConfirmButton
-                label="Delete"
-                confirmLabel="Delete Card"
-                onConfirm={() => void deleteCurrent()}
-              />
-            </div>
-            {deleteError && <ErrorText>{deleteError}</ErrorText>}
-            <ResultBar value={current.pending ?? 'pass'} onChange={training.changeResult} />
-            <Button size="lg" onClick={training.next}>
-              Next
-            </Button>
-          </div>
-        </>
-      )}
-      {!sensei.available && (
-        <p className="text-muted-foreground text-center text-xs">{sensei.reason}</p>
-      )}
-      <AnswerSheet
-        cardId={current.card}
-        kataId={card.kataId}
-        open={sheet === 'answer'}
-        onClose={() => setSheet(null)}
-        onChecked={(result, notes, answer) => {
-          setSheet(null);
-          training.answerChecked(result, notes, answer);
-        }}
-      />
-      <AuthoringSheet request={authoring} onClose={() => setAuthoring(null)} />
-      <FollowUpSheet
-        cardId={current.card}
-        kataId={card.kataId}
-        open={sheet === 'chat'}
-        onClose={() => setSheet(null)}
-        history={history}
-        onHistory={(next) => setChat({ card: current.card, history: next })}
+      <CardStep
+        // A new step per Card shown, also when a failed Card comes back: it drops the Chat.
+        key={`${training.state.shown}:${current.card}`}
+        card={card}
+        current={current}
+        training={training}
+        onChatOpenChange={setChatOpen}
       />
     </Shell>
   );

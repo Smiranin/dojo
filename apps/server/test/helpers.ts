@@ -69,3 +69,13 @@ export async function testServer(options: TestServerOptions = {}): Promise<TestS
     },
   };
 }
+
+/** Starts the test server on an ephemeral loopback port and returns its base URL. */
+export async function listenOnLoopback(s: TestServer): Promise<string> {
+  await s.app.listen({ host: '127.0.0.1', port: 0 });
+  const address = s.app.server.address();
+  if (typeof address !== 'object' || address === null) {
+    throw new Error('The test server has no TCP address');
+  }
+  return `http://127.0.0.1:${address.port}`;
+}

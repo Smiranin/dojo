@@ -1,5 +1,6 @@
-// The contract with Kobzar, the owner's speech-to-text service (ADR 0005). Written by hand from
-// Kobzar's plan; this is the only file that knows Kobzar's routes and field names.
+// The contract with Kobzar, the owner's speech-to-text service, which the phone calls directly.
+// Written by hand from Kobzar's plan; this is the only file that knows Kobzar's routes and
+// field names.
 
 export type DictationLanguage = 'ru' | 'en';
 

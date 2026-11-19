@@ -16,12 +16,12 @@ const BUSY = { status: 503, code: 'busy', message: 'Kobzar is busy with another 
 
 type User = ReturnType<typeof userEvent.setup>;
 
-/** Opens the answer sheet of the first Card of the Python Training. */
-async function openAnswerSheet(user: User): Promise<HTMLElement> {
-  const answer = await screen.findByRole('button', { name: 'Answer' });
-  await waitFor(() => expect(answer).toBeEnabled());
-  await user.click(answer);
-  return screen.findByRole('textbox', { name: 'Your answer' });
+/** Opens the Kumite input of the first Card of the Python Training. */
+async function openKumite(user: User): Promise<HTMLElement> {
+  const kumite = await screen.findByRole('button', { name: 'Kumite' });
+  await waitFor(() => expect(kumite).toBeEnabled());
+  await user.click(kumite);
+  return screen.findByRole('textbox', { name: 'Your Kumite' });
 }
 
 /** Taps the microphone once Kobzar is ready and waits until the recording runs. */
@@ -44,14 +44,15 @@ describe('Dictation', () => {
     localStorage.clear();
   });
 
-  it('shows no microphone button while Kobzar is not configured', async () => {
+  it('shows no microphone button but the submit arrow while Kobzar is not configured', async () => {
     withMicrophone();
     renderApp(TRAINING);
     const user = userEvent.setup();
 
-    await openAnswerSheet(user);
+    await openKumite(user);
 
     expect(screen.queryByRole('button', { name: 'Dictate' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
   });
 
   it('shows no Settings on Home while Kobzar is not configured', async () => {
@@ -68,7 +69,7 @@ describe('Dictation', () => {
     kobzar.transcripts.push(' and not your data\n');
     const { dojo } = renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    const field = await openAnswerSheet(user);
+    const field = await openKumite(user);
     await user.type(field, 'the interpreter state');
 
     await startDictation(user);
@@ -85,7 +86,7 @@ describe('Dictation', () => {
     kobzar.transcripts.push('текст');
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    const field = await openAnswerSheet(user);
+    const field = await openKumite(user);
 
     await startDictation(user);
     await user.click(screen.getByRole('button', { name: 'Stop dictation' }));
@@ -110,7 +111,7 @@ describe('Dictation', () => {
     kobzar.transcripts.push('done');
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    const field = await openAnswerSheet(user);
+    const field = await openKumite(user);
 
     await startDictation(user);
     expect(screen.getByText('Recording 0:00')).toHaveAttribute('role', 'status');
@@ -126,7 +127,7 @@ describe('Dictation', () => {
     const kobzar = new FakeKobzar();
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    const field = await openAnswerSheet(user);
+    const field = await openKumite(user);
     await user.type(field, 'typed');
 
     await startDictation(user);
@@ -144,7 +145,7 @@ describe('Dictation', () => {
     kobzar.transcripts.push('  ');
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    const field = await openAnswerSheet(user);
+    const field = await openKumite(user);
     await user.type(field, 'typed');
 
     await startDictation(user);
@@ -162,7 +163,7 @@ describe('Dictation', () => {
     kobzar.transcripts.push(BUSY, BUSY, 'at last');
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    const field = await openAnswerSheet(user);
+    const field = await openKumite(user);
 
     await startDictation(user);
     await user.click(screen.getByRole('button', { name: 'Stop dictation' }));
@@ -193,7 +194,7 @@ describe('Dictation', () => {
     kobzar.transcripts.push({ status: 500, code: 'internal_error', message });
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    await openAnswerSheet(user);
+    await openKumite(user);
 
     await startDictation(user);
     await user.click(screen.getByRole('button', { name: 'Stop dictation' }));
@@ -207,7 +208,7 @@ describe('Dictation', () => {
     kobzar.health = 'down';
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    await openAnswerSheet(user);
+    await openKumite(user);
 
     expect(await screen.findByText('Kobzar is unreachable.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Dictate' })).toBeDisabled();
@@ -224,7 +225,7 @@ describe('Dictation', () => {
     kobzar.health = 'loading';
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    await openAnswerSheet(user);
+    await openKumite(user);
 
     expect(await screen.findByText('Kobzar is starting.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Dictate' })).toBeDisabled();
@@ -235,7 +236,7 @@ describe('Dictation', () => {
     const kobzar = new FakeKobzar();
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    await openAnswerSheet(user);
+    await openKumite(user);
     const dictate = screen.getByRole('button', { name: 'Dictate' });
     await waitFor(() => expect(dictate).toBeEnabled());
 
@@ -257,7 +258,7 @@ describe('Dictation', () => {
     kobzar.transcripts.push('everything said in time');
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    const field = await openAnswerSheet(user);
+    const field = await openKumite(user);
 
     await startDictation(user);
 
@@ -272,21 +273,21 @@ describe('Dictation', () => {
     expect(microphone.tracksStopped()).toBe(1);
   });
 
-  it('releases the microphone and sends nothing when the sheet is closed while recording', async () => {
+  it('releases the microphone and sends nothing when the Kumite is cancelled while recording', async () => {
     const microphone = withMicrophone();
     const kobzar = new FakeKobzar();
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
-    await openAnswerSheet(user);
+    await openKumite(user);
     await startDictation(user);
 
-    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
     await waitFor(() =>
-      expect(screen.queryByRole('textbox', { name: 'Your answer' })).not.toBeInTheDocument(),
+      expect(screen.queryByRole('textbox', { name: 'Your Kumite' })).not.toBeInTheDocument(),
     );
 
     expect(microphone.tracksStopped()).toBe(1);
-    await openAnswerSheet(user);
+    await openKumite(user);
     expect(await screen.findByRole('button', { name: 'Dictate' })).toBeEnabled();
     expect(screen.queryByRole('button', { name: 'Stop dictation' })).not.toBeInTheDocument();
     expect(kobzar.received).toEqual([]);
@@ -297,7 +298,7 @@ describe('Dictation', () => {
     renderApp(TRAINING, new FakeDojo(), { kobzar });
     const user = userEvent.setup();
 
-    await openAnswerSheet(user);
+    await openKumite(user);
 
     expect(
       await screen.findByText('Dictation needs the Dojo opened over HTTPS.'),
@@ -320,7 +321,7 @@ describe('Dictation', () => {
     await user.click(screen.getByRole('button', { name: 'Stop dictation' }));
 
     await waitFor(() =>
-      expect(screen.getByRole('textbox', { name: 'Your question' })).toHaveValue('why is that'),
+      expect(screen.getByRole('textbox', { name: 'Your message' })).toHaveValue('why is that'),
     );
     expect(kobzar.received[0]?.hints).toEqual(['Python', 'data-model', 'async', 'typing']);
   });

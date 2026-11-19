@@ -1,15 +1,12 @@
 import { PencilLineIcon } from 'lucide-react';
 import { useState } from 'react';
-import { appendDictated } from '../features/dictation/append.js';
-import { DictationButton } from '../features/dictation/DictationButton.js';
 import { newId } from '../lib/utils.js';
 import { useSync } from '../store/context.js';
+import { ComposeField } from './ComposeField.js';
 import { Button } from './ui/button.js';
-import { Field } from './ui/field.js';
 import { Sheet, SheetContent } from './ui/sheet.js';
-import { Textarea } from './ui/textarea.js';
 
-/** One tap from anywhere to drop a line into the Inbox (SPEC story 49). */
+/** One tap from anywhere to drop a line into the Inbox. */
 export function QuickNoteButton() {
   const sync = useSync();
   const [open, setOpen] = useState(false);
@@ -35,23 +32,15 @@ export function QuickNoteButton() {
       </Button>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent title="Quick note" description="Goes to the Inbox; make a Card of it later.">
-          <Field label="Note" hideLabel>
-            <Textarea
-              value={text}
-              onChange={(event) => setText(event.target.value)}
-              rows={3}
-              autoFocus
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) save();
-              }}
-            />
-          </Field>
-          <DictationButton
-            onText={(dictated) => setText((current) => appendDictated(current, dictated))}
+          <ComposeField
+            label="Note"
+            value={text}
+            onChange={setText}
+            onSubmit={save}
+            submitLabel="Save note"
+            canSubmit={text.trim() !== ''}
+            autoFocus
           />
-          <Button size="lg" onClick={save} disabled={text.trim() === ''}>
-            Save note
-          </Button>
         </SheetContent>
       </Sheet>
     </>

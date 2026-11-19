@@ -1,13 +1,13 @@
 import type {
   AppendResult,
+  Chat,
   ChatOutput,
-  ChatTurn,
-  CheckOutput,
   ContentSnapshot,
   ErrorBody,
   HealthResponse,
   InboxNote,
   Kata,
+  KumiteOutput,
   Rep,
   SenseiAuthorRequest,
   SenseiAuthorResponse,
@@ -95,8 +95,13 @@ export interface DojoApi {
   deleteInbox(id: string): Promise<void>;
   patchKata(kataId: string, flags: { pinned?: boolean; archived?: boolean }): Promise<Kata>;
   deleteCard(kataId: string, slug: string): Promise<void>;
-  senseiCheck(cardId: string, answer: string): Promise<CheckOutput>;
-  senseiChat(cardId: string, history: ChatTurn[], message: string): Promise<ChatOutput>;
+  senseiKumite(cardId: string, kumite: string, signal?: AbortSignal): Promise<KumiteOutput>;
+  senseiChat(
+    cardId: string,
+    chat: Chat,
+    message: string,
+    signal?: AbortSignal,
+  ): Promise<ChatOutput>;
   senseiAuthor(body: SenseiAuthorRequest): Promise<SenseiAuthorResponse>;
 }
 
@@ -111,9 +116,17 @@ export const api: DojoApi = {
   deleteInbox: (id) => request(`/api/inbox/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   patchKata: (kataId, flags) => request(`/api/katas/${kataId}`, { method: 'PATCH', body: flags }),
   deleteCard: (kataId, slug) => request(`/api/cards/${kataId}/${slug}`, { method: 'DELETE' }),
-  senseiCheck: (cardId, answer) =>
-    request('/api/sensei/check', { method: 'POST', body: { cardId, answer } }),
-  senseiChat: (cardId, history, message) =>
-    request('/api/sensei/chat', { method: 'POST', body: { cardId, history, message } }),
+  senseiKumite: (cardId, kumite, signal) =>
+    request('/api/sensei/kumite', {
+      method: 'POST',
+      body: { cardId, kumite },
+      ...(signal && { signal }),
+    }),
+  senseiChat: (cardId, chat, message, signal) =>
+    request('/api/sensei/chat', {
+      method: 'POST',
+      body: { cardId, chat, message },
+      ...(signal && { signal }),
+    }),
   senseiAuthor: (body) => request('/api/sensei/author', { method: 'POST', body }),
 };

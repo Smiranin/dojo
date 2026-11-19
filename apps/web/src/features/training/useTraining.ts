@@ -19,7 +19,7 @@ export interface TrainingHandle {
   know(): void;
   skip(): void;
   drop(): void;
-  answerChecked(result: Result, notes: string, answer: string): void;
+  kumiteChecked(result: Result, notes: string, kumite: string): void;
   changeResult(result: Result): void;
   next(): void;
   end(): void;
@@ -48,9 +48,9 @@ export function useTraining(cards: CardId[]): TrainingHandle {
     know: useCallback(() => dispatch({ type: 'know' }), []),
     skip: useCallback(() => dispatch({ type: 'skip' }), []),
     drop: useCallback(() => dispatch({ type: 'drop' }), []),
-    answerChecked: useCallback(
-      (result: Result, notes: string, answer: string) =>
-        dispatch({ type: 'answer-checked', result, notes, answer }),
+    kumiteChecked: useCallback(
+      (result: Result, notes: string, kumite: string) =>
+        dispatch({ type: 'kumite-checked', result, notes, kumite }),
       [],
     ),
     changeResult: useCallback((result: Result) => dispatch({ type: 'change-result', result }), []),

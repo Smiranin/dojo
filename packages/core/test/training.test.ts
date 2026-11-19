@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  chatOpeningOf,
   createTraining,
   isFinished,
   orderDue,
@@ -64,13 +65,13 @@ describe('trainingReducer', () => {
     expect(isFinished(state)).toBe(true);
   });
 
-  it('answer-checked reveals with the Sensei Result, the notes and the answer', () => {
+  it('kumite-checked reveals with the Sensei Result and keeps the Kumite with its verdict', () => {
     const state = run(createTraining([A]), [
       {
-        type: 'answer-checked',
+        type: 'kumite-checked',
         result: 'pass-with-notes',
         notes: 'Mention stability.',
-        answer: 'Keys identify items.',
+        kumite: 'Keys identify items.',
       },
     ]);
 
@@ -78,9 +79,41 @@ describe('trainingReducer', () => {
       card: A,
       phase: 'revealed',
       pending: 'pass-with-notes',
-      notes: 'Mention stability.',
-      answer: 'Keys identify items.',
+      revealedBy: 'kumite',
+      kumite: {
+        text: 'Keys identify items.',
+        result: 'pass-with-notes',
+        notes: 'Mention stability.',
+      },
     });
+  });
+
+  it("records that Know and Don't know revealed the Card", () => {
+    const know = run(createTraining([A]), [{ type: 'know' }]);
+    const dontKnow = run(createTraining([A]), [{ type: 'dont-know' }]);
+
+    expect(know.current).toEqual({
+      card: A,
+      phase: 'revealed',
+      pending: 'pass',
+      revealedBy: 'know',
+    });
+    expect(dontKnow.current).toEqual({
+      card: A,
+      phase: 'revealed',
+      pending: 'fail',
+      revealedBy: 'dont-know',
+    });
+  });
+
+  it('keeps the verdict of the Kumite when the learner changes the Result', () => {
+    const state = run(createTraining([A]), [
+      { type: 'kumite-checked', result: 'fail', notes: 'Wrong.', kumite: 'No idea.' },
+      { type: 'change-result', result: 'pass' },
+    ]);
+
+    expect(state.current?.pending).toBe('pass');
+    expect(state.current?.kumite?.result).toBe('fail');
   });
 
   it('skip once moves the Card to the end, skip twice drops it without a Rep', () => {
@@ -133,6 +166,34 @@ describe('trainingReducer', () => {
     expect(state.committed).toEqual([
       { id: 'fixed-id', card: A, result: 'pass', at: '2026-01-01T00:00:00.000Z' },
     ]);
+  });
+});
+
+describe('chatOpeningOf', () => {
+  it('has no opening while the question is hidden', () => {
+    expect(chatOpeningOf({ card: A, phase: 'question' })).toBeNull();
+  });
+
+  it('opens with the Kumite and the verdict of the Sensei', () => {
+    const state = run(createTraining([A]), [
+      { type: 'kumite-checked', result: 'pass-with-notes', notes: 'Say why.', kumite: 'Identity.' },
+      { type: 'change-result', result: 'fail' },
+    ]);
+
+    expect(chatOpeningOf(state.current!)).toEqual({
+      kind: 'kumite',
+      kumite: 'Identity.',
+      result: 'pass-with-notes',
+      notes: 'Say why.',
+    });
+  });
+
+  it("opens with the learner's own Know or Don't know", () => {
+    const know = run(createTraining([A]), [{ type: 'know' }]);
+    const dontKnow = run(createTraining([A]), [{ type: 'dont-know' }]);
+
+    expect(chatOpeningOf(know.current!)).toEqual({ kind: 'self-graded', choice: 'know' });
+    expect(chatOpeningOf(dontKnow.current!)).toEqual({ kind: 'self-graded', choice: 'dont-know' });
   });
 });
 

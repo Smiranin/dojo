@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DIFFICULTIES, RESULTS, type Card, type ContentIssue, type Kata } from '../domain/types.js';
 import { SLUG_PATTERN } from '../domain/ids.js';
-import { AUTHOR_KINDS, chatTurnSchema } from '../sensei/port.js';
+import { AUTHOR_KINDS, chatSchema } from '../sensei/port.js';
 import { settingsSchema } from './settings.js';
 
 const isoDate = z.iso.datetime();
@@ -92,13 +92,13 @@ export type HealthResponse = z.infer<typeof healthResponseSchema>;
 
 export const settingsResponseSchema = settingsSchema;
 
-export const senseiCheckRequestSchema = z.object({
+export const senseiKumiteRequestSchema = z.object({
   cardId: cardIdSchema,
-  answer: z.string().min(1),
+  kumite: z.string().min(1),
 });
 export const senseiChatRequestSchema = z.object({
   cardId: cardIdSchema,
-  history: z.array(chatTurnSchema),
+  chat: chatSchema,
   message: z.string().min(1),
 });
 export const senseiAuthorRequestSchema = z.object({
@@ -106,9 +106,7 @@ export const senseiAuthorRequestSchema = z.object({
   instruction: z.string(),
   kataId: z.string().regex(SLUG_PATTERN).optional(),
   cardId: cardIdSchema.optional(),
-  context: z
-    .object({ chat: z.array(chatTurnSchema).optional(), note: z.string().optional() })
-    .optional(),
+  context: z.object({ chat: chatSchema.optional(), note: z.string().optional() }).optional(),
 });
 export type SenseiAuthorRequest = z.infer<typeof senseiAuthorRequestSchema>;
 export const senseiAuthorResponseSchema = z.object({

@@ -22,7 +22,7 @@ interface FieldWiring {
 const FieldContext = createContext<FieldWiring | null>(null);
 
 /** The attributes a Field hands to the control inside it; every control already accepts them. */
-interface ControlWiring {
+export interface ControlWiring {
   id?: string | undefined;
   'aria-describedby'?: string | undefined;
   'aria-invalid'?: React.AriaAttributes['aria-invalid'];

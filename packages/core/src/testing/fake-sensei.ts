@@ -3,16 +3,16 @@ import type {
   AuthoringProposal,
   ChatInput,
   ChatOutput,
-  CheckInput,
-  CheckOutput,
   HealthStatus,
+  KumiteInput,
+  KumiteOutput,
   Sensei,
 } from '../sensei/port.js';
 
 type Scripted<T> = T | Error;
 
 export type FakeSenseiCall =
-  | { method: 'check'; input: CheckInput }
+  | { method: 'kumite'; input: KumiteInput }
   | { method: 'chat'; input: ChatInput }
   | { method: 'author'; input: AuthorInput };
 
@@ -23,12 +23,13 @@ export type FakeSenseiCall =
 export class FakeSensei implements Sensei {
   health: HealthStatus = { ok: true };
   readonly calls: FakeSenseiCall[] = [];
-  private readonly checks: Scripted<CheckOutput>[] = [];
+  private readonly kumites: Scripted<KumiteOutput>[] = [];
   private readonly chats: Scripted<ChatOutput>[] = [];
   private readonly proposals: Scripted<AuthoringProposal>[] = [];
+  private gate: Promise<void> | null = null;
 
-  scriptCheck(...outputs: Scripted<CheckOutput>[]): this {
-    this.checks.push(...outputs);
+  scriptKumite(...outputs: Scripted<KumiteOutput>[]): this {
+    this.kumites.push(...outputs);
     return this;
   }
 
@@ -42,26 +43,45 @@ export class FakeSensei implements Sensei {
     return this;
   }
 
+  /**
+   * Makes every call wait after it was recorded until the returned function is called, so a
+   * test can act while the Sensei is still working.
+   */
+  hold(): () => void {
+    let release!: () => void;
+    this.gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    return () => {
+      this.gate = null;
+      release();
+    };
+  }
+
   async healthCheck(): Promise<HealthStatus> {
     return this.health;
   }
 
-  async check(input: CheckInput): Promise<CheckOutput> {
-    this.calls.push({ method: 'check', input });
-    return take(this.checks, 'check');
+  async kumite(input: KumiteInput): Promise<KumiteOutput> {
+    this.calls.push({ method: 'kumite', input });
+    await this.gate;
+    return take(this.kumites, 'kumite');
   }
 
   async chat(input: ChatInput): Promise<ChatOutput> {
     this.calls.push({ method: 'chat', input });
+    await this.gate;
     return take(this.chats, 'chat');
   }
 
   async author(input: AuthorInput): Promise<AuthoringProposal> {
     this.calls.push({ method: 'author', input });
+    await this.gate;
     return take(this.proposals, 'author');
   }
 }
 
+/** Takes the next scripted output of a queue; throws a scripted Error or on an empty queue. */
 function take<T>(queue: Scripted<T>[], method: string): T {
   const next = queue.shift();
   if (next === undefined) throw new Error(`FakeSensei has no scripted ${method} output left`);

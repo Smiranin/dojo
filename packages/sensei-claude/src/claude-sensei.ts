@@ -3,14 +3,15 @@ import {
   SenseiError,
   authoringProposalSchema,
   chatOutputSchema,
-  checkOutputSchema,
+  kumiteOutputSchema,
+  type AbortSignalLike,
   type AuthorInput,
   type AuthoringProposal,
   type ChatInput,
   type ChatOutput,
-  type CheckInput,
-  type CheckOutput,
   type HealthStatus,
+  type KumiteInput,
+  type KumiteOutput,
   type Sensei,
 } from '@dojo/core';
 import { z } from 'zod';
@@ -18,17 +19,18 @@ import { senseiEnv } from './env.js';
 import {
   AUTHOR_SYSTEM_PROMPT,
   CHAT_SYSTEM_PROMPT,
-  CHECK_SYSTEM_PROMPT,
+  KUMITE_SYSTEM_PROMPT,
   authorPrompt,
   chatPrompt,
-  checkPrompt,
+  kumitePrompt,
 } from './prompts.js';
-import { AUTHORING_JSON_SCHEMA, CHAT_JSON_SCHEMA, CHECK_JSON_SCHEMA } from './schemas.js';
+import { AUTHORING_JSON_SCHEMA, CHAT_JSON_SCHEMA, KUMITE_JSON_SCHEMA } from './schemas.js';
 
 /** One answer plus the StructuredOutput pseudo-tool and a few retries of it. */
 export const SENSEI_MAX_TURNS = 6;
 export const HEALTH_TIMEOUT_MS = 60_000;
 const STDERR_TAIL_CHARS = 1_000;
+const ABORTED_MESSAGE = 'The learner left the Card';
 
 export interface ClaudeSenseiOptions {
   timeoutMs: number;
@@ -41,8 +43,9 @@ export interface ClaudeSenseiOptions {
 }
 
 /**
- * The Sensei on the Claude Agent SDK (ADR 0001): one `query()` per call, no tools, a JSON
- * schema for the answer, and the response validated with the same zod schema the server uses.
+ * The Sensei on the Claude Agent SDK, on the owner's Claude Code login: one `query()` per
+ * call, no tools, a JSON schema for the answer, and the response validated with the same zod
+ * schema the server uses.
  * It never touches files; the server writes what the Sensei proposes.
  */
 export class ClaudeSensei implements Sensei {
@@ -67,12 +70,13 @@ export class ClaudeSensei implements Sensei {
     }
   }
 
-  check(input: CheckInput): Promise<CheckOutput> {
+  kumite(input: KumiteInput): Promise<KumiteOutput> {
     return this.structured(
-      CHECK_SYSTEM_PROMPT,
-      checkPrompt(input),
-      CHECK_JSON_SCHEMA,
-      checkOutputSchema,
+      KUMITE_SYSTEM_PROMPT,
+      kumitePrompt(input),
+      KUMITE_JSON_SCHEMA,
+      kumiteOutputSchema,
+      input.signal,
     );
   }
 
@@ -82,6 +86,7 @@ export class ClaudeSensei implements Sensei {
       chatPrompt(input),
       CHAT_JSON_SCHEMA,
       chatOutputSchema,
+      input.signal,
     );
   }
 
@@ -99,12 +104,14 @@ export class ClaudeSensei implements Sensei {
     prompt: string,
     jsonSchema: Record<string, unknown>,
     schema: z.ZodType<T>,
+    signal?: AbortSignalLike,
   ): Promise<T> {
     const output = await this.run({
       systemPrompt,
       prompt,
       jsonSchema,
       timeoutMs: this.options.timeoutMs,
+      ...(signal && { signal }),
     });
     const parsed = schema.safeParse(output);
     if (!parsed.success) {
@@ -116,14 +123,26 @@ export class ClaudeSensei implements Sensei {
     return parsed.data;
   }
 
-  /** Runs one query to its result; resolves the structured output (or the text when no schema). */
+  /**
+   * Runs one query to its result; resolves the structured output (or the text when no schema).
+   * The query stops on the timeout or when the caller's signal aborts, and the error says which.
+   */
   private async run(call: {
     systemPrompt: string;
     prompt: string;
     jsonSchema?: Record<string, unknown>;
     timeoutMs: number;
+    signal?: AbortSignalLike;
   }): Promise<unknown> {
+    if (call.signal?.aborted) throw new SenseiError('aborted', ABORTED_MESSAGE);
     const abort = new AbortController();
+    let stoppedBy: 'timeout' | 'caller' | null = null;
+    const stop = (by: 'timeout' | 'caller') => {
+      stoppedBy ??= by;
+      abort.abort();
+    };
+    const onCallerAbort = () => stop('caller');
+    call.signal?.addEventListener('abort', onCallerAbort, { once: true });
     let stderrTail = '';
     const options: Options = {
       systemPrompt: call.systemPrompt,
@@ -143,7 +162,7 @@ export class ClaudeSensei implements Sensei {
         pathToClaudeCodeExecutable: this.options.pathToClaudeCodeExecutable,
       }),
     };
-    const timer = setTimeout(() => abort.abort(), call.timeoutMs);
+    const timer = setTimeout(() => stop('timeout'), call.timeoutMs);
     try {
       for await (const message of query({
         prompt: call.prompt,
@@ -164,13 +183,15 @@ export class ClaudeSensei implements Sensei {
       }
       throw new SenseiError('unavailable', 'The Sensei ended without a result');
     } catch (error) {
-      if (error instanceof SenseiError) throw error;
-      if (abort.signal.aborted) {
+      // A stopped query fails in whatever way the SDK reports it; the reason is ours.
+      if (stoppedBy === 'caller') throw new SenseiError('aborted', ABORTED_MESSAGE);
+      if (stoppedBy === 'timeout') {
         throw new SenseiError(
           'timeout',
           `The Sensei did not answer within ${call.timeoutMs / 1000} s`,
         );
       }
+      if (error instanceof SenseiError) throw error;
       const tail = stderrTail.trim();
       const message = error instanceof Error ? error.message : String(error);
       throw new SenseiError(
@@ -179,6 +200,7 @@ export class ClaudeSensei implements Sensei {
       );
     } finally {
       clearTimeout(timer);
+      call.signal?.removeEventListener('abort', onCallerAbort);
       abort.abort();
     }
   }

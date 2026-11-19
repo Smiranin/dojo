@@ -1,14 +1,12 @@
-import type { AuthorKind, ChatTurn, SenseiAuthorResponse } from '@dojo/core';
+import type { AuthorKind, Chat, SenseiAuthorResponse } from '@dojo/core';
 import { useState } from 'react';
 import { api } from '../../api/client.js';
+import { ComposeField } from '../../components/ComposeField.js';
 import { Button } from '../../components/ui/button.js';
 import { Field } from '../../components/ui/field.js';
 import { Select } from '../../components/ui/select.js';
 import { Sheet, SheetContent } from '../../components/ui/sheet.js';
-import { Textarea } from '../../components/ui/textarea.js';
 import { useDojoState, useSync } from '../../store/context.js';
-import { appendDictated } from '../dictation/append.js';
-import { DictationButton } from '../dictation/DictationButton.js';
 import { SenseiWaiting } from './SenseiWaiting.js';
 
 export interface AuthoringRequest {
@@ -16,7 +14,7 @@ export interface AuthoringRequest {
   /** Preselected Kata; `from-inbox` offers a picker when absent. */
   kataId?: string;
   cardId?: string;
-  context?: { chat?: ChatTurn[]; note?: string };
+  context?: { chat?: Chat; note?: string };
 }
 
 export interface AuthoringSheetProps {
@@ -134,29 +132,21 @@ export function AuthoringSheet({ request, onClose, onDone }: AuthoringSheetProps
                 {request.context.note}
               </blockquote>
             )}
-            <Field label="Instruction" hideLabel error={error}>
-              <Textarea
-                placeholder={PLACEHOLDER[request.kind]}
-                value={instruction}
-                onChange={(event) => setInstruction(event.target.value)}
-                disabled={busy}
-                rows={4}
-                autoFocus
-              />
-            </Field>
-            <DictationButton
+            <ComposeField
+              label="Instruction"
+              placeholder={PLACEHOLDER[request.kind]}
+              value={instruction}
+              onChange={setInstruction}
+              onSubmit={() => void submit()}
+              submitLabel="Ask the Sensei"
+              canSubmit={canSubmit}
+              disabled={busy}
+              error={error}
+              autoFocus
               // The Kata the request is about, or the one picked here; a new Kata has none yet.
               kataId={needsKata && chosenKata !== '' ? chosenKata : undefined}
-              disabled={busy}
-              onText={(dictated) => setInstruction((current) => appendDictated(current, dictated))}
             />
-            {busy ? (
-              <SenseiWaiting label="The Sensei is writing…" />
-            ) : (
-              <Button size="lg" onClick={() => void submit()} disabled={!canSubmit}>
-                Ask the Sensei
-              </Button>
-            )}
+            {busy && <SenseiWaiting label="The Sensei is writing…" />}
           </>
         )}
       </SheetContent>

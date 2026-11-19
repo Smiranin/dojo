@@ -1,4 +1,4 @@
-import { authoringProposalSchema, chatOutputSchema, checkOutputSchema } from '@dojo/core';
+import { authoringProposalSchema, chatOutputSchema, kumiteOutputSchema } from '@dojo/core';
 import { z } from 'zod';
 
 /** JSON schemas for the SDK's structured output, derived from the one zod definition in core. */
@@ -12,6 +12,6 @@ function jsonSchemaOf(schema: z.ZodType): Record<string, unknown> {
   return json;
 }
 
-export const CHECK_JSON_SCHEMA = jsonSchemaOf(checkOutputSchema);
+export const KUMITE_JSON_SCHEMA = jsonSchemaOf(kumiteOutputSchema);
 export const CHAT_JSON_SCHEMA = jsonSchemaOf(chatOutputSchema);
 export const AUTHORING_JSON_SCHEMA = jsonSchemaOf(authoringProposalSchema);

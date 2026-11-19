@@ -15,8 +15,8 @@ export class ProposalRejectedError extends Error {
 }
 
 /**
- * Makes a proposal safe to write (SPEC req. 29a, 31): Tags outside the Kata's list are dropped,
- * slugs are normalized, a fix keeps the target's slug and is exactly one Card, and an empty
+ * Makes a proposal safe to write: Tags outside the Kata's list are dropped, slugs are
+ * normalized, a fix keeps the target's slug and is exactly one Card, and an empty
  * proposal is rejected because there is nothing to write.
  */
 export function applyProposalRules(

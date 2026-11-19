@@ -1,17 +1,21 @@
 import type { Card, CardId, Rep, Result } from '../domain/types.js';
 import type { CardSchedule } from '../schedule/schedule.js';
+import type { ChatOpening, SelfGrade } from '../sensei/port.js';
 
 export type TrainingPhase = 'question' | 'revealed';
+
+/** What revealed a Card: a Kumite graded by the Sensei, or the learner's own Know / Don't know. */
+export type RevealedBy = 'kumite' | SelfGrade;
 
 export interface CurrentCard {
   card: CardId;
   phase: TrainingPhase;
   /** The Result that `next` will commit; set when the Card is revealed. */
   pending?: Result;
-  /** The Sensei's notes for a checked answer, shown above the reference answer. */
-  notes?: string;
-  /** What the learner wrote for the check; shown with the notes so they can be compared. */
-  answer?: string;
+  /** Set with the phase `revealed`. */
+  revealedBy?: RevealedBy;
+  /** The learner's Kumite and the Sensei's verdict on it; set when `revealedBy` is `kumite`. */
+  kumite?: { text: string; result: Result; notes: string };
 }
 
 export interface TrainingState {
@@ -32,7 +36,7 @@ export type TrainingAction =
   | { type: 'skip' }
   /** The current Card was deleted: leave it without a Rep and never show it again. */
   | { type: 'drop' }
-  | { type: 'answer-checked'; result: Result; notes: string; answer: string }
+  | { type: 'kumite-checked'; result: Result; notes: string; kumite: string }
   | { type: 'change-result'; result: Result }
   | { type: 'next'; at: string; id: string }
   | { type: 'end'; at: string; id: string };
@@ -56,10 +60,12 @@ export function isFinished(state: TrainingState): boolean {
   return state.current === null;
 }
 
+/** Shows the reference answer with `result` pending; only a Card still on its question. */
 function reveal(
   state: TrainingState,
   result: Result,
-  checked?: { notes: string; answer: string },
+  revealedBy: RevealedBy,
+  kumite?: CurrentCard['kumite'],
 ): TrainingState {
   if (!state.current || state.current.phase !== 'question') return state;
   return {
@@ -68,9 +74,26 @@ function reveal(
       card: state.current.card,
       phase: 'revealed',
       pending: result,
-      ...checked,
+      revealedBy,
+      ...(kumite && { kumite }),
     },
   };
+}
+
+/**
+ * How a Chat about the current Card begins, derived from how the Card was revealed; null while
+ * the question is still hidden.
+ */
+export function chatOpeningOf(current: CurrentCard): ChatOpening | null {
+  if (current.phase !== 'revealed') return null;
+  if (current.revealedBy === 'kumite' && current.kumite) {
+    const { text, result, notes } = current.kumite;
+    return { kind: 'kumite', kumite: text, result, notes };
+  }
+  if (current.revealedBy === 'know' || current.revealedBy === 'dont-know') {
+    return { kind: 'self-graded', choice: current.revealedBy };
+  }
+  return null;
 }
 
 function pullNext(state: TrainingState, queue: CardId[]): TrainingState {
@@ -98,17 +121,21 @@ function commit(
 }
 
 /**
- * The whole Training rule set (SPEC req. 11-19) as a pure reducer. Time and ids come in with
- * the action so the reducer never reads the clock or random numbers.
+ * The whole Training rule set as a pure reducer. Time and ids come in with the action so the
+ * reducer never reads the clock or random numbers.
  */
 export function trainingReducer(state: TrainingState, action: TrainingAction): TrainingState {
   switch (action.type) {
     case 'dont-know':
-      return reveal(state, 'fail');
+      return reveal(state, 'fail', 'dont-know');
     case 'know':
-      return reveal(state, 'pass');
-    case 'answer-checked':
-      return reveal(state, action.result, { notes: action.notes, answer: action.answer });
+      return reveal(state, 'pass', 'know');
+    case 'kumite-checked':
+      return reveal(state, action.result, 'kumite', {
+        text: action.kumite,
+        result: action.result,
+        notes: action.notes,
+      });
     case 'change-result': {
       if (!state.current || state.current.phase !== 'revealed') return state;
       return { ...state, current: { ...state.current, pending: action.result } };

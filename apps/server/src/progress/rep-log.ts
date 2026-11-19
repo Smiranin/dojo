@@ -10,7 +10,7 @@ export class RepLogError extends Error {
 }
 
 /**
- * The append-only Rep log (ADR 0002): one JSON object per line in `reps.jsonl`. The file is
+ * The append-only Rep log: one JSON object per line in `reps.jsonl`, never rewritten. The file is
  * the truth, so every operation re-reads it; appends are serialized through a promise chain
  * and a Rep whose id is already in the file is reported as a duplicate, never written twice.
  */

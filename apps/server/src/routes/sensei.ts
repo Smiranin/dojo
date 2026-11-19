@@ -2,9 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import {
   senseiAuthorRequestSchema,
   senseiChatRequestSchema,
-  senseiCheckRequestSchema,
+  senseiKumiteRequestSchema,
   type Card,
 } from '@dojo/core';
+import { abortOnDisconnect } from '../abort.js';
 import type { ServerContext } from '../context.js';
 import { NotFoundError, parseWith } from '../errors.js';
 import { applyProposal } from '../sensei/authoring.js';
@@ -18,16 +19,18 @@ export async function cardFromDisk(ctx: ServerContext, cardId: string): Promise<
 }
 
 export function registerSenseiRoutes(app: FastifyInstance, ctx: ServerContext): void {
-  app.post('/api/sensei/check', async (request) => {
-    const { cardId, answer } = parseWith(senseiCheckRequestSchema, request.body);
+  app.post('/api/sensei/kumite', async (request, reply) => {
+    const { cardId, kumite } = parseWith(senseiKumiteRequestSchema, request.body);
+    const signal = abortOnDisconnect(reply);
     const card = await cardFromDisk(ctx, cardId);
-    return ctx.sensei.check({ card, answer });
+    return ctx.sensei.kumite({ card, kumite, signal });
   });
 
-  app.post('/api/sensei/chat', async (request) => {
-    const { cardId, history, message } = parseWith(senseiChatRequestSchema, request.body);
+  app.post('/api/sensei/chat', async (request, reply) => {
+    const { cardId, chat, message } = parseWith(senseiChatRequestSchema, request.body);
+    const signal = abortOnDisconnect(reply);
     const card = await cardFromDisk(ctx, cardId);
-    return ctx.sensei.chat({ card, history, message });
+    return ctx.sensei.chat({ card, chat, message, signal });
   });
 
   app.post('/api/sensei/author', async (request) => {

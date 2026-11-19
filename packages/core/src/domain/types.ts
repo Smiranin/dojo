@@ -12,7 +12,7 @@ export type Belt = (typeof BELTS)[number];
 export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
-/** One answer attempt; the log of Reps is the only progress record (ADR 0002). */
+/** One answer attempt; the append-only log of Reps is the only progress record. */
 export interface Rep {
   /** Generated on the device that made the Rep so a retried write never duplicates. */
   id: string;

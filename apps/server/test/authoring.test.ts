@@ -160,7 +160,18 @@ describe('POST /api/sensei/author', () => {
 
   it('hands an Inbox note and a chat to the Sensei as context', async () => {
     sensei.scriptAuthor({ cards: [proposedCard] });
-    const context = { note: 'ask about RSC', chat: [{ role: 'learner', text: 'hi' }] };
+    const context = {
+      note: 'ask about RSC',
+      chat: {
+        opening: {
+          kind: 'kumite',
+          kumite: 'no idea',
+          result: 'fail',
+          notes: '- RSC run on the server',
+        },
+        turns: [{ role: 'learner', text: 'hi' }],
+      },
+    };
 
     await s.app.inject({
       method: 'POST',

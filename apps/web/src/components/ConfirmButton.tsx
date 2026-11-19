@@ -8,7 +8,7 @@ export interface ConfirmButtonProps {
   disabled?: boolean;
 }
 
-/** Two taps to do something destructive: the first arms, the second confirms (SPEC story 46). */
+/** Two taps to do something destructive: the first arms, the second confirms. */
 export function ConfirmButton({ label, confirmLabel, onConfirm, disabled }: ConfirmButtonProps) {
   const [armed, setArmed] = useState(false);
   if (!armed) {

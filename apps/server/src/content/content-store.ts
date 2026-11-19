@@ -142,7 +142,7 @@ export class ContentStore {
     }
   }
 
-  /** Removes the Card file; Reps are untouched (ADR 0002). */
+  /** Removes the Card file; its Reps stay in the log, which is never rewritten. */
   async deleteCard(kataId: KataId, slug: string): Promise<void> {
     if (!isSlug(kataId) || !isSlug(slug)) throw new NotFoundError(`Card ${kataId}/${slug}`);
     if (!(await this.cardExists(kataId, slug))) throw new NotFoundError(`Card ${kataId}/${slug}`);

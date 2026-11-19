@@ -2,7 +2,7 @@ import { appendFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ContentSnapshot } from '@dojo/core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { testServer, type TestServer } from './helpers.js';
+import { listenOnLoopback, testServer, type TestServer } from './helpers.js';
 
 /** Every stream opened by a test, aborted in afterEach so a failed test cannot hang cleanup. */
 const openStreams = new Set<AbortController>();
@@ -43,9 +43,7 @@ describe('GET /api/events', { timeout: 20_000 }, () => {
   let base: string;
   beforeEach(async () => {
     s = await testServer();
-    await s.app.listen({ host: '127.0.0.1', port: 0 });
-    const address = s.app.server.address();
-    base = typeof address === 'object' && address ? `http://127.0.0.1:${address.port}` : '';
+    base = await listenOnLoopback(s);
   });
   afterEach(async () => {
     for (const abort of openStreams) abort.abort();

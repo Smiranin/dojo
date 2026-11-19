@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const days = z.number().int().positive();
 
-/** The spaced-repetition rule, in days; see PLAN "Scheduling". */
+/** The spaced-repetition rule, in days; `scheduleCard` says how each Result uses them. */
 export const schedulingSettingsSchema = z.object({
   minDays: days.default(1),
   notesDays: days.default(3),
@@ -20,7 +20,7 @@ export const senseiSettingsSchema = z.object({
 export type SenseiSettings = z.infer<typeof senseiSettingsSchema>;
 
 export const kobzarSettingsSchema = z.object({
-  /** Where the web app finds Kobzar; absent means no microphone button (ADR 0005). */
+  /** Where the phone finds Kobzar and calls it directly; absent means no microphone button. */
   url: z.url({ protocol: /^https?$/ }),
 });
 export type KobzarSettings = z.infer<typeof kobzarSettingsSchema>;

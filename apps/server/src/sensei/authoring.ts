@@ -29,7 +29,7 @@ function cardFields(card: ProposedCard): Omit<Card, 'id' | 'kataId' | 'slug'> {
 /**
  * Asks the Sensei for a proposal and turns it into files: the Sensei never writes, the rules in
  * core make the proposal safe, and this module decides file names. Nothing is ever deleted
- * here (SPEC req. 31); an existing Kata's `kata.md` is never rewritten (req. 29a).
+ * here, and an existing Kata's `kata.md` is never rewritten.
  */
 export async function applyProposal(
   ctx: ServerContext,

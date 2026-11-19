@@ -1,7 +1,7 @@
 import { RESULTS, type Result } from '@dojo/core';
 import { cn } from '../../lib/utils.js';
 
-const LABEL: Record<Result, string> = {
+export const RESULT_LABEL: Record<Result, string> = {
   fail: 'Fail',
   'pass-with-notes': 'Pass with notes',
   pass: 'Pass',
@@ -24,7 +24,7 @@ export function ResultBar({ value, onChange }: { value: Result; onChange: (r: Re
               : 'bg-background',
           )}
         >
-          {LABEL[result]}
+          {RESULT_LABEL[result]}
         </button>
       ))}
     </div>
